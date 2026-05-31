@@ -1,7 +1,7 @@
 /*
  * ============================================================
  *  Hospital Patient Records Sorting System
- *  TDS4223 Data Structure and Algorithms - Trimester 1 2026/2027
+ *  TDS4223 Data Structure and Algorithms 
  * ============================================================
  *  Algorithms: Heap Sort  vs  Tim Sort
  *  Sorting Key: Patient ID
@@ -33,18 +33,12 @@ Student ID:    242DT2422J
 #include <ctime>
 using namespace std;
 
-// ============================================================
-// CONSTANTS
-// ============================================================
 
 const int MAX_SIZE   = 500;
 const int SMALL_SIZE = 100;
 const int LARGE_SIZE = 500;
-const int RUN        = 32;   // Tim Sort run size (typical: 32 or 64)
+const int RUN        = 32;   
 
-// ============================================================
-// STRUCTS
-// ============================================================
 
 struct Patient
 {
@@ -63,9 +57,6 @@ struct Performance
     double executionTime;
 };
 
-// ============================================================
-// PERFORMANCE UTILITIES
-// ============================================================
 
 void resetPerformance(Performance &p)
 {
@@ -75,9 +66,6 @@ void resetPerformance(Performance &p)
     p.executionTime = 0.0;
 }
 
-// ============================================================
-// RECORD GENERATION
-// ============================================================
 
 Patient createPatient(int number)
 {
@@ -135,9 +123,6 @@ void copyRecords(Patient source[], Patient dest[], int size)
         dest[i] = source[i];
 }
 
-// ============================================================
-// DISPLAY UTILITIES
-// ============================================================
 
 void displayHeader()
 {
@@ -180,9 +165,6 @@ void displayPerformance(const char algorithmName[], Performance p)
     cout << "Iterations     : " << p.iterations    << endl;
 }
 
-// ============================================================
-// SWAP HELPER
-// ============================================================
 
 void swapPatient(Patient &a, Patient &b, Performance &p)
 {
@@ -193,14 +175,9 @@ void swapPatient(Patient &a, Patient &b, Performance &p)
     p.movements += 3;
 }
 
-// ============================================================
-// HEAP SORT  (sorts by patientID ascending)
-// ============================================================
-//
+
 //  Time Complexity  : O(n log n) — best, average, and worst
 //  Space Complexity : O(1) auxiliary (in-place)
-//  Stable           : No
-//
 
 void heapify(Patient record[], int n, int i, Performance &p)
 {
@@ -266,19 +243,11 @@ Performance heapSort(Patient record[], int size)
 // ============================================================
 // TIM SORT  (sorts by patientID ascending)
 // ============================================================
-//
-//  Tim Sort is a hybrid sorting algorithm derived from Merge Sort
-//  and Insertion Sort.  It divides the array into small "runs"
-//  (sorted using Insertion Sort), then merges them using Merge Sort.
-//  This makes it extremely fast on real-world data that is partially
-//  sorted.  RUN size is set to 32 (standard practice).
-//
 //  Time Complexity  : O(n)       best case  (already sorted)
 //                     O(n log n) average case
 //                     O(n log n) worst case
 //  Space Complexity : O(n) auxiliary (merge buffer)
-//  Stable           : Yes
-//
+
 
 /* Insertion sort a sub-array from left to right (inclusive) */
 void insertionSortRun(Patient record[], int left, int right, Performance &p)
@@ -404,9 +373,6 @@ Performance timSort(Patient record[], int size)
     return p;
 }
 
-// ============================================================
-// CATEGORISE RECORDS BY EMERGENCY LEVEL
-// ============================================================
 
 void categoriseRecords(int size)
 {
@@ -444,9 +410,7 @@ void categoriseRecords(int size)
     }
 }
 
-// ============================================================
-// SORT AND DISPLAY HELPERS
-// ============================================================
+
 
 void sortByHeap(int size)
 {
@@ -475,12 +439,6 @@ void sortByTim(int size)
     displayRecords(record, size);
     displayPerformance("Tim Sort", result);
 }
-
-// ============================================================
-
-// ============================================================
-// MAIN MENU
-// ============================================================
 
 void menu()
 {
@@ -552,9 +510,6 @@ void menu()
     } while (choice != 9);
 }
 
-// ============================================================
-// MAIN
-// ============================================================
 
 int main()
 {
