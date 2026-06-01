@@ -22,8 +22,13 @@ Student ID:    242DT243LZ
 */
 
 /*Member 4
-Student Name:
-Student ID:    242DT2422J
+Student Name:  TEE QI SHENG
+Student ID:    242DT2432Q
+*/
+
+/*Member 5
+Student Name:  CHEW JIN HONG
+Student ID:    242DT241PP
 */
 
 #include <iostream>
