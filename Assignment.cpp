@@ -84,6 +84,28 @@ void generateAverageRecords(Patient record[], int size)
         record[i] = createPatient(i + 1);
 }
 
+// best case: data is already sorted perfectly (ascending)
+void generateBestRecords(Patient record[], int size)
+{
+	int i;
+	for(i = 0; i < size; i++)
+	{
+		record[i] = createPatient(i+1);
+		record[i].patientID = 10000 + i;
+	}
+}
+
+// worst case: data is reverse sorted (descending)
+void generateWorstRecords(Patient record[], int size)
+{
+	int i;
+	for(i = 0; i < size; i++)
+	{
+		record[i] = createPatient(i+1);
+		record[i].patientID = 10000 + (size - i);
+	}
+}
+
 // print the table header
 void displayHeader()
 {
@@ -408,6 +430,42 @@ void sortByTim(int size)
     displayPerformance("Tim Sort", result);
 }
 
+void sortBestCase(int size)
+{
+    Patient record[MAX_SIZE];
+    Performance result;
+
+    generateBestRecords(record, size);
+    result = heapSort(record, size);
+    cout << "\nBest Case - Sorted " << size << " Records using Heap Sort" << endl;
+    displayRecords(record, size);
+    displayPerformance("Heap Sort", result);
+
+    generateBestRecords(record, size);
+    result = timSort(record, size);
+    cout << "\nBest Case - Sorted " << size << " Records using Tim Sort" << endl;
+    displayRecords(record, size);
+    displayPerformance("Tim Sort", result);
+}
+
+void sortWorstCase(int size)
+{
+    Patient record[MAX_SIZE];
+    Performance result;
+
+    generateWorstRecords(record, size);
+    result = heapSort(record, size);
+    cout << "\nWorst Case - Sorted " << size << " Records using Heap Sort" << endl;
+    displayRecords(record, size);
+    displayPerformance("Heap Sort", result);
+
+    generateWorstRecords(record, size);
+    result = timSort(record, size);
+    cout << "\nWorst Case - Sorted " << size << " Records using Tim Sort" << endl;
+    displayRecords(record, size);
+    displayPerformance("Tim Sort", result);
+}
+
 void menu()
 {
     int choice;
@@ -428,7 +486,11 @@ void menu()
         cout << "6.  Sort 500 Records using Tim Sort" << endl;
         cout << "7.  Categorise 100 Patient Records by Emergency Level" << endl;
         cout << "8.  Categorise 500 Patient Records by Emergency Level" << endl;
-        cout << "9.  Exit" << endl;
+        cout << "9.  Sort 100 Records - Best Case (Heap Sort vs Tim Sort)" << endl;
+		cout << "10. Sort 500 Records - Best Case (Heap Sort vs Tim Sort)" << endl;
+		cout << "11. Sort 100 Records - Worst Case (Heap Sort vs Tim Sort)" << endl;
+		cout << "12. Sort 500 Records - Worst Case (Heap Sort vs Tim Sort)" << endl;
+		cout << "13. Exit" << endl;
         cout << "Enter your choice: ";
         cin >> choice;
 
@@ -467,15 +529,31 @@ void menu()
             categoriseRecords(LARGE_SIZE);
         }
         else if (choice == 9)
-        {
-            cout << "Thank you for using the Hospital Patient Records Sorting System." << endl;
-        }
+		{
+		    sortBestCase(SMALL_SIZE);
+		}
+		else if (choice == 10)
+		{
+		    sortBestCase(LARGE_SIZE);
+		}
+		else if (choice == 11)
+		{
+		    sortWorstCase(SMALL_SIZE);
+		}
+		else if (choice == 12)
+		{
+		    sortWorstCase(LARGE_SIZE);
+		}
+		else if (choice == 13)
+		{
+		    cout << "Thank you for using the Hospital Patient Records Sorting System." << endl;
+		}
         else
         {
             cout << "Invalid choice. Please enter a number between 1 and 9." << endl;
         }
 
-    } while (choice != 9);
+    } while (choice != 13);
 }
 
 int main()
