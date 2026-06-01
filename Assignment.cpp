@@ -1,12 +1,9 @@
 /*
- * ============================================================
- *  Hospital Patient Records Sorting System
- *  TDS4223 Data Structure and Algorithms 
- * ============================================================
- *  Algorithms: Heap Sort  vs  Tim Sort
- *  Sorting Key: Patient ID
- *  Datasets: 100 records and 500 records
- * ============================================================
+ * Hospital Patient Records Sorting System
+ * Subject: TDS4223 Data Structure and Algorithms
+ * Algorithms: Heap Sort vs Tim Sort
+ * Sorting Key: Patient ID
+ * Datasets: 100 records and 500 records
  */
 
 /*Member 1
@@ -33,13 +30,13 @@ Student ID:    242DT2422J
 #include <ctime>
 using namespace std;
 
-
+// max number of records we support
 const int MAX_SIZE   = 500;
 const int SMALL_SIZE = 100;
 const int LARGE_SIZE = 500;
-const int RUN        = 32;   
+const int RUN        = 32;
 
-
+// patient struct to store all patient info
 struct Patient
 {
     int patientNo;
@@ -49,6 +46,7 @@ struct Patient
     int admissionDay;
 };
 
+// we use this struct to track how well each algorithm performs
 struct Performance
 {
     long comparisons;
@@ -57,7 +55,7 @@ struct Performance
     double executionTime;
 };
 
-
+// reset all performance values to zero before we start sorting
 void resetPerformance(Performance &p)
 {
     p.comparisons   = 0;
@@ -66,7 +64,7 @@ void resetPerformance(Performance &p)
     p.executionTime = 0.0;
 }
 
-
+// create one patient using a number, values are generated using simple math
 Patient createPatient(int number)
 {
     Patient p;
@@ -78,7 +76,7 @@ Patient createPatient(int number)
     return p;
 }
 
-/* Average case: pseudo-random order */
+// average case: data is in mixed order
 void generateAverageRecords(Patient record[], int size)
 {
     int i;
@@ -86,50 +84,14 @@ void generateAverageRecords(Patient record[], int size)
         record[i] = createPatient(i + 1);
 }
 
-/* Best case: already sorted ascending by patientID */
-void generateBestRecords(Patient record[], int size)
-{
-    int i;
-    for (i = 0; i < size; i++)
-    {
-        record[i].patientNo      = i + 1;
-        record[i].patientID      = 10000 + (i + 1);
-        record[i].age            = 1 + (((i + 1) * 13) % 90);
-        record[i].emergencyLevel = 1 + (((i + 1) * 7)  % 5);
-        record[i].admissionDay   = 1 + (((i + 1) * 11) % 30);
-    }
-}
-
-/* Worst case: reverse sorted by patientID */
-void generateWorstRecords(Patient record[], int size)
-{
-    int i, value;
-    value = size;
-    for (i = 0; i < size; i++)
-    {
-        record[i].patientNo      = i + 1;
-        record[i].patientID      = 10000 + value;
-        record[i].age            = 1 + ((value * 13) % 90);
-        record[i].emergencyLevel = 1 + ((value * 7)  % 5);
-        record[i].admissionDay   = 1 + ((value * 11) % 30);
-        value--;
-    }
-}
-
-void copyRecords(Patient source[], Patient dest[], int size)
-{
-    int i;
-    for (i = 0; i < size; i++)
-        dest[i] = source[i];
-}
-
-
+// print the table header
 void displayHeader()
 {
     cout << "No\tPatient ID\tAge\tEmergency Level\tAdmission Day" << endl;
     cout << "------------------------------------------------------------" << endl;
 }
 
+// print one row of patient data
 void displayRow(Patient &r)
 {
     cout << r.patientNo      << "\t"
@@ -139,6 +101,7 @@ void displayRow(Patient &r)
          << r.admissionDay   << endl;
 }
 
+// print all records
 void displayRecords(Patient record[], int size)
 {
     int i;
@@ -147,14 +110,7 @@ void displayRecords(Patient record[], int size)
         displayRow(record[i]);
 }
 
-void displayFirstRecords(Patient record[], int size, int limit)
-{
-    int i;
-    displayHeader();
-    for (i = 0; i < size && i < limit; i++)
-        displayRow(record[i]);
-}
-
+// print the performance result after sorting
 void displayPerformance(const char algorithmName[], Performance p)
 {
     cout << endl;
@@ -165,7 +121,7 @@ void displayPerformance(const char algorithmName[], Performance p)
     cout << "Iterations     : " << p.iterations    << endl;
 }
 
-
+// swap two patient records, count as 3 movements
 void swapPatient(Patient &a, Patient &b, Performance &p)
 {
     Patient temp;
@@ -175,10 +131,17 @@ void swapPatient(Patient &a, Patient &b, Performance &p)
     p.movements += 3;
 }
 
+// ============================================================
+// HEAP SORT
+// ============================================================
+// Heap Sort builds a max-heap first so the biggest value is at top.
+// Then we swap the top to the end and fix the heap again.
+// We repeat until all elements are sorted.
+// Time Complexity: O(n log n) for best, average and worst case.
+// Space: O(1) in-place, no extra memory needed.
 
-//  Time Complexity  : O(n log n) — best, average, and worst
-//  Space Complexity : O(1) auxiliary (in-place)
-
+// heapify makes sure the parent is bigger than its children.
+// if not, swap and call heapify again on that position.
 void heapify(Patient record[], int n, int i, Performance &p)
 {
     int largest, left, right;
@@ -219,14 +182,14 @@ Performance heapSort(Patient record[], int size)
     resetPerformance(p);
     startTime = clock();
 
-    /* Phase 1: Build max-heap */
+    // phase 1: build max-heap from the middle going left
     for (i = size / 2 - 1; i >= 0; i--)
     {
         p.iterations++;
         heapify(record, size, i, p);
     }
 
-    /* Phase 2: Extract elements from heap one by one */
+    // phase 2: move root (biggest) to end, then fix heap
     for (i = size - 1; i > 0; i--)
     {
         p.iterations++;
@@ -241,15 +204,18 @@ Performance heapSort(Patient record[], int size)
 }
 
 // ============================================================
-// TIM SORT  (sorts by patientID ascending)
+// TIM SORT
 // ============================================================
-//  Time Complexity  : O(n)       best case  (already sorted)
-//                     O(n log n) average case
-//                     O(n log n) worst case
-//  Space Complexity : O(n) auxiliary (merge buffer)
+// Tim Sort is a mix of Insertion Sort and Merge Sort.
+// First we split the array into small runs of size 32.
+// Each run is sorted using Insertion Sort because it is fast for small data.
+// Then we merge all sorted runs using Merge Sort.
+// It is very fast when data is already partly sorted.
+// Time Complexity: O(n) best case, O(n log n) average and worst case.
+// Space: O(n) extra memory needed for merge buffer.
 
 
-/* Insertion sort a sub-array from left to right (inclusive) */
+// insertion sort one run from index left to right
 void insertionSortRun(Patient record[], int left, int right, Performance &p)
 {
     int i, j;
@@ -262,6 +228,7 @@ void insertionSortRun(Patient record[], int left, int right, Performance &p)
         p.movements++;
 
         j = i - 1;
+        // shift bigger elements to the right to make space for temp
         while (j >= left)
         {
             p.comparisons++;
@@ -279,7 +246,7 @@ void insertionSortRun(Patient record[], int left, int right, Performance &p)
     }
 }
 
-/* Merge two sorted sub-arrays: [left..mid] and [mid+1..right] */
+// merge two sorted runs back into the array
 void mergeRuns(Patient record[], int left, int mid, int right,
                Patient buffer[], Performance &p)
 {
@@ -288,7 +255,7 @@ void mergeRuns(Patient record[], int left, int mid, int right,
 
     len1 = mid - left + 1;
 
-    /* Copy left half into buffer */
+    // copy left run into buffer first
     for (i = 0; i < len1; i++)
     {
         buffer[i] = record[left + i];
@@ -299,6 +266,7 @@ void mergeRuns(Patient record[], int left, int mid, int right,
     j = mid + 1;
     k = left;
 
+    // compare buffer and right run, put the smaller one back
     while (i < len1 && j <= right)
     {
         p.iterations++;
@@ -317,6 +285,7 @@ void mergeRuns(Patient record[], int left, int mid, int right,
         k++;
     }
 
+    // copy any leftover from buffer
     while (i < len1)
     {
         record[k] = buffer[i];
@@ -324,7 +293,6 @@ void mergeRuns(Patient record[], int left, int mid, int right,
         i++;
         k++;
     }
-    /* remaining record[j..right] already in place */
 }
 
 Performance timSort(Patient record[], int size)
@@ -337,7 +305,7 @@ Performance timSort(Patient record[], int size)
     resetPerformance(p);
     startTime = clock();
 
-    /* Step 1: Sort individual runs using Insertion Sort */
+    // step 1: sort each run of 32 elements using insertion sort
     for (i = 0; i < size; i += RUN)
     {
         p.iterations++;
@@ -348,7 +316,7 @@ Performance timSort(Patient record[], int size)
         insertionSortRun(record, left, right, p);
     }
 
-    /* Step 2: Merge runs bottom-up */
+    // step 2: merge sorted runs, doubling size each time: 32, 64, 128...
     for (mergeSize = RUN; mergeSize < size; mergeSize *= 2)
     {
         p.iterations++;
@@ -359,7 +327,7 @@ Performance timSort(Patient record[], int size)
             right = left + 2 * mergeSize - 1;
 
             if (mid >= size - 1)
-                break;                      // only one run, nothing to merge
+                break;
             if (right >= size)
                 right = size - 1;
 
@@ -373,7 +341,7 @@ Performance timSort(Patient record[], int size)
     return p;
 }
 
-
+// group patients by emergency level and display each group
 void categoriseRecords(int size)
 {
     Patient record[MAX_SIZE];
@@ -410,8 +378,7 @@ void categoriseRecords(int size)
     }
 }
 
-
-
+// sort and display records using heap sort
 void sortByHeap(int size)
 {
     Patient record[MAX_SIZE];
@@ -426,6 +393,7 @@ void sortByHeap(int size)
     displayPerformance("Heap Sort", result);
 }
 
+// sort and display records using tim sort
 void sortByTim(int size)
 {
     Patient record[MAX_SIZE];
@@ -509,7 +477,6 @@ void menu()
 
     } while (choice != 9);
 }
-
 
 int main()
 {
