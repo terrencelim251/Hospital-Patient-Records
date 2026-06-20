@@ -1234,18 +1234,55 @@ public:
 };
 
 // ---------------------------------------------------------------------------
+// Used right after every "cin >> someNumber" in this program.
+// If the user types something that is not a number (like "abc") into a
+// numeric field, cin >> fails and goes into a permanent "fail state" -
+// every cin read after that (even the menu choice) instantly fails too
+// without waiting for input, which freezes the whole program into an
+// infinite loop. This function checks for that exact situation, clears
+// the fail state and throws away the bad leftover text, then throws an
+// InputException so the existing try/catch in each menu loop can print a
+// friendly message and safely return to the menu instead of looping forever.
+// ---------------------------------------------------------------------------
+void recoverFromBadNumberInput() {
+    if (cin.fail()) {
+        cin.clear();
+        cin.ignore(1000, '\n');
+        throw InputException("Invalid input - please enter a valid number.");
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Replaces any "|" character the user typed with a space. A "|" inside
+// saved data would silently break our pipe-delimited (|) txt file format,
+// the exact same way an empty field used to (see fillInIfEmpty below).
+// ---------------------------------------------------------------------------
+void stripPipeCharacters(char* field) {
+    for (int i = 0; field[i] != '\0'; i++) {
+        if (field[i] == '|') {
+            field[i] = ' ';
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Small helper used everywhere we read a text field with cin.getline().
 // If the user just presses Enter and leaves a field blank, strtok() later
 // treats "||" (two pipes with nothing between them) as ONE delimiter, not
 // an empty field - this silently shifts every field after it and breaks
 // the save/load format. To stop this from ever happening, we replace any
-// truly empty field with "N/A" right after reading it.
+// truly empty field with "N/A" right after reading it. We also strip out
+// any "|" character the user typed as part of their real answer, for the
+// same reason.
 // ---------------------------------------------------------------------------
 void fillInIfEmpty(char* field, const char* defaultValue) {
+    stripPipeCharacters(field);
+
     if (strlen(field) == 0) {
         strcpy(field, defaultValue);
     }
 }
+
 
 
 // BONUS FEATURE 1: Ward Capacity Management
@@ -1620,6 +1657,7 @@ void addPrescriptionForPatient(Prescription prescriptionArray[], int& numberOfPr
     int medicineChoice;
     cout << "Pick a medicine (enter the number): ";
     cin >> medicineChoice;
+    recoverFromBadNumberInput();
 
     if (medicineChoice < 1 || medicineChoice > TOTAL_MEDICINE_TYPES) {
         throw InputException("That is not a valid medicine choice.");
@@ -1630,6 +1668,7 @@ void addPrescriptionForPatient(Prescription prescriptionArray[], int& numberOfPr
     int quantityWanted;
     cout << "How many units to prescribe: ";
     cin >> quantityWanted;
+    recoverFromBadNumberInput();
 
     if (quantityWanted < 1) {
         throw InputException("Quantity must be at least 1.");
@@ -1763,6 +1802,7 @@ void generateAndSaveBillForPatient(Patient& targetPatient, Prescription prescrip
     int numberOfDaysStayed;
     cout << "How many days has this patient stayed (enter 0 if not admitted yet): ";
     cin >> numberOfDaysStayed;
+    recoverFromBadNumberInput();
 
     if (numberOfDaysStayed < 0) {
         throw InputException("Number of days cannot be negative.");
@@ -1783,11 +1823,18 @@ void generateAndSaveBillForPatient(Patient& targetPatient, Prescription prescrip
                                                                      doctorScheduleList, targetPatient.getPatientID());
     double totalCost = wardCost + medicineCost + consultationFees;
 
-    ofstream outFile(FILE_BILL);
+    // Open in append mode instead of the normal write mode. patient_bill.txt
+    // holds every bill ever generated, one after another, each one starting
+    // with a "BILL_FOR_PATIENT_ID:" marker line. This is what lets
+    // loadAndDisplayBill() find and show only ONE specific patient's own
+    // most recent bill, instead of whichever bill happened to be generated
+    // last for anybody.
+    ofstream outFile(FILE_BILL, ios::app);
     if (!outFile.is_open()) {
         throw FileException("Could not open bill file for writing.");
     }
 
+    outFile << "BILL_FOR_PATIENT_ID:" << targetPatient.getPatientID() << "\n";
     outFile << "===== HOSPITAL BILL =====\n";
     outFile << "Patient Name      : " << targetPatient.getName() << "\n";
     outFile << "Patient ID        : " << targetPatient.getPatientID() << "\n";
@@ -1837,21 +1884,60 @@ void generateAndSaveBillForPatient(Patient& targetPatient, Prescription prescrip
     cout << "==========================" << endl;
 }
 
-// lets a Customer (or Staff) read back the most recently saved bill from
-// the txt file, the same idea as loadAndDisplaySummary()
-void loadAndDisplayBill() {
+// lets a Customer (or Staff) read back ONE specific patient's own most
+// recently saved bill from the txt file. patient_bill.txt holds every
+// bill ever generated for every patient, one after another (see
+// generateAndSaveBillForPatient() above), each block starting with a
+// "BILL_FOR_PATIENT_ID:<id>" marker line. We scan through the whole file
+// remembering the start of the LAST block whose marker matches the
+// patientID we were asked for, then print out only that one block.
+void loadAndDisplayBill(int patientID) {
     ifstream inFile(FILE_BILL);
     if (!inFile.is_open()) {
-        cout << "No bill has been generated yet." << endl;
+        cout << "No bill has been generated for you yet." << endl;
+        return;
+    }
+
+    // the marker line looks like "BILL_FOR_PATIENT_ID:1001" - build the
+    // exact marker text we are looking for, for this one patient
+    char markerToFind[40];
+    sprintf(markerToFind, "BILL_FOR_PATIENT_ID:%d", patientID);
+    int markerLength = strlen(markerToFind);
+
+    // first pass: read through the whole file and remember every line
+    // that belongs to the LAST matching block, overwriting our remembered
+    // block each time we hit a new matching marker
+    char allLines[2000][200];
+    int totalLinesInFile = 0;
+    char line[200];
+    while (inFile.getline(line, 200) && totalLinesInFile < 2000) {
+        strcpy(allLines[totalLinesInFile], line);
+        totalLinesInFile++;
+    }
+    inFile.close();
+
+    int lastMatchStart = -1;
+    for (int i = 0; i < totalLinesInFile; i++) {
+        if (strncmp(allLines[i], markerToFind, markerLength) == 0) {
+            lastMatchStart = i;
+        }
+    }
+
+    if (lastMatchStart == -1) {
+        cout << "No bill has been generated for you yet." << endl;
         return;
     }
 
     cout << "\n----- Reading saved bill from file -----" << endl;
-    char line[200];
-    while (inFile.getline(line, 200)) {
-        cout << line << endl;
+    // print every line of this block, starting right after the marker
+    // line, until we hit the next marker (someone else's bill) or the end
+    // of the file
+    for (int i = lastMatchStart + 1; i < totalLinesInFile; i++) {
+        if (strncmp(allLines[i], "BILL_FOR_PATIENT_ID:", 20) == 0) {
+            break;
+        }
+        cout << allLines[i] << endl;
     }
-    inFile.close();
 }
 
 // BONUS FEATURE: View All Staff Accounts
@@ -2040,6 +2126,7 @@ void restockMedicineMenu(MedicineStock medicineStockArray[]) {
     int medicineChoice;
     cout << "Pick a medicine to restock (enter the number): ";
     cin >> medicineChoice;
+    recoverFromBadNumberInput();
 
     if (medicineChoice < 1 || medicineChoice > TOTAL_MEDICINE_TYPES) {
         throw InputException("That is not a valid medicine choice.");
@@ -2050,6 +2137,7 @@ void restockMedicineMenu(MedicineStock medicineStockArray[]) {
     int amountToAdd;
     cout << "How many units to add to stock: ";
     cin >> amountToAdd;
+    recoverFromBadNumberInput();
 
     if (amountToAdd < 1) {
         throw InputException("Amount to add must be at least 1.");
@@ -2125,6 +2213,7 @@ void sortAllPrescriptionsMenu(Prescription prescriptionArray[], int numberOfPres
 
     int sortChoice;
     cin >> sortChoice;
+    recoverFromBadNumberInput();
 
     if (sortChoice != 1 && sortChoice != 2) {
         throw InputException("Invalid sort option.");
@@ -2170,6 +2259,7 @@ void dischargePatientMenu(PatientLinkedList& patientList, Prescription prescript
     cout << "\n-- Discharge Patient --" << endl;
     cout << "Enter Patient ID to discharge: ";
     cin >> patientIDToDischarge;
+    recoverFromBadNumberInput();
 
     Patient* targetPatient = patientList.findByID(patientIDToDischarge);
     if (targetPatient == NULL) {
@@ -2229,14 +2319,17 @@ void registerStaff(StaffMember staffArray[], int& numberOfStaff, int maxSize) {
     cout << "IC Number: "; cin.getline(ic, 20);
     fillInIfEmpty(ic, "N/A");
     cout << "Age: "; cin >> age;
+    recoverFromBadNumberInput();
     cout << "Gender (M/F): "; cin >> gender;
     cout << "Role (Doctor/Nurse/Admin): "; cin >> role;
     cin.ignore(1000, '\n');
 	cout << "Username: "; cin.getline(username, MAX_NAME_LEN);
+	stripPipeCharacters(username);
 	if (strlen(username) == 0) {
 	    throw InputException("Username cannot be empty.");
 	}
 	cout << "Password: "; cin.getline(password, MAX_PASS_LEN);
+	stripPipeCharacters(password);
 	if (strlen(password) == 0) {
 	    throw InputException("Password cannot be empty.");
 	}
@@ -2301,8 +2394,10 @@ void addPatientRecord(PatientLinkedList& list) {
     cout << "IC Number: "; cin.getline(ic, 20);
     fillInIfEmpty(ic, "N/A");
     cout << "Age: "; cin >> age;
+    recoverFromBadNumberInput();
     cout << "Gender (M/F): "; cin >> gender;
     cout << "Ward Number (1-10): "; cin >> ward;
+    recoverFromBadNumberInput();
     
     // basic input validation - this is where the try/catch error handling
     if (ward < 1 || ward > 10) {
@@ -2321,10 +2416,12 @@ void addPatientRecord(PatientLinkedList& list) {
     cout << "Assigned Doctor: "; cin.getline(doctor, MAX_NAME_LEN);
     fillInIfEmpty(doctor, "N/A");
     cout << "Username (for patient login): "; cin.getline(username, MAX_NAME_LEN);
+    stripPipeCharacters(username);
     if (strlen(username) == 0) {
 	    throw InputException("Username cannot be empty.");
 	}
     cout << "Password: "; cin.getline(password, MAX_PASS_LEN);
+    stripPipeCharacters(password);
     if (strlen(password) == 0) {
 	    throw InputException("Password cannot be empty.");
 	}
@@ -2353,6 +2450,7 @@ void editPatientRecord(PatientLinkedList& list) {
     cout << "\n-- Edit Patient Record --" << endl;
     cout << "Enter Patient ID to edit: ";
     cin >> id;
+    recoverFromBadNumberInput();
 
     Patient* targetPatient = list.findByID(id);
     if (targetPatient == NULL) {
@@ -2370,6 +2468,7 @@ void editPatientRecord(PatientLinkedList& list) {
     cout << "4. Patient Status (Admitted/Discharged)" << endl;
     cout << "Enter choice: ";
     cin >> editChoice;
+    recoverFromBadNumberInput();
     cin.ignore(1000, '\n');
 
     if (editChoice == 1) {
@@ -2385,6 +2484,7 @@ void editPatientRecord(PatientLinkedList& list) {
     } else if (editChoice == 3) {
         int newWard;
         cout << "New Ward Number: "; cin >> newWard;
+        recoverFromBadNumberInput();
 
         if (newWard < 1 || newWard > TOTAL_WARDS) {
             throw InputException("Ward number must be between 1 and 10.");
@@ -2433,6 +2533,7 @@ void deletePatientRecord(PatientLinkedList& list) {
     cout << "\n-- Delete Patient Record --" << endl;
     cout << "Enter Patient ID to delete: ";
     cin >> id;
+    recoverFromBadNumberInput();
 
     Patient* patientToDelete = list.findByID(id);
     if (patientToDelete == NULL) {
@@ -2472,6 +2573,7 @@ void searchPatientMenu(const PatientLinkedList& list) {
     cout << "2. Search by Name (Linear Search)" << endl;
     cout << "Enter choice: ";
     cin >> searchChoice;
+    recoverFromBadNumberInput();
 
     Patient patientArray[MAX_PATIENTS];
     int total = list.copyToArray(patientArray, MAX_PATIENTS);
@@ -2480,6 +2582,7 @@ void searchPatientMenu(const PatientLinkedList& list) {
         int id;
         cout << "Enter Patient ID: ";
         cin >> id;
+        recoverFromBadNumberInput();
         selectionSortPatients(patientArray, total, 3);   // Binary Search needs the array sorted by ID first
         int idx = binarySearchPatientByID(patientArray, total, id);
         if (idx == -1) {
@@ -2518,6 +2621,7 @@ void sortPatientsMenu(PatientLinkedList& list) {
     cout << "2. Sort by Ward Number" << endl;
     cout << "Enter choice: ";
     cin >> sortChoice;
+    recoverFromBadNumberInput();
 
     if (sortChoice != 1 && sortChoice != 2) {
         throw InputException("Invalid sort option.");
@@ -2561,6 +2665,7 @@ void updateAppointmentStatusMenu(Appointment appointmentArray[], int numberOfApp
     cout << "\n-- Update Appointment Status --" << endl;
     cout << "Enter Appointment ID: ";
     cin >> recID;
+    recoverFromBadNumberInput();
 
     for (int i = 0; i < numberOfAppointments; i++) {
         if (appointmentArray[i].getRecordID() == recID) {
@@ -2582,8 +2687,10 @@ void approveWardTransferMenu(PatientLinkedList& list, const StaffMember& approve
     cout << "\n-- Approve Ward Transfer --" << endl;
     cout << "Enter Patient ID: ";
     cin >> id;
+    recoverFromBadNumberInput();
     cout << "New Ward Number: ";
     cin >> newWard;
+    recoverFromBadNumberInput();
 
     Patient* targetPatient = list.findByID(id);
     if (targetPatient == NULL) {
@@ -2647,6 +2754,7 @@ void staffMainMenu(PatientLinkedList& patientList, StaffMember& currentStaff,
         // and go straight back to the menu instead of crashing or ending the program
         try {
             cin >> choice;
+            recoverFromBadNumberInput();
 
             switch (choice) {
                 case 1:  addPatientRecord(patientList); break;
@@ -2663,6 +2771,7 @@ void staffMainMenu(PatientLinkedList& patientList, StaffMember& currentStaff,
                     int patientIDForPrescription;
                     cout << "Enter Patient ID to prescribe medicine for: ";
                     cin >> patientIDForPrescription;
+                    recoverFromBadNumberInput();
                     addPrescriptionForPatient(prescriptionArray, numberOfPrescriptions,
                                                 medicineStockArray, patientIDForPrescription,
                                                 currentStaff.getName(), patientList);
@@ -2672,6 +2781,7 @@ void staffMainMenu(PatientLinkedList& patientList, StaffMember& currentStaff,
                     int patientIDToView;
                     cout << "Enter Patient ID to view prescriptions for: ";
                     cin >> patientIDToView;
+                    recoverFromBadNumberInput();
                     viewPrescriptionsForPatient(prescriptionArray, numberOfPrescriptions, patientIDToView);
                     break;
                 }
@@ -2679,6 +2789,7 @@ void staffMainMenu(PatientLinkedList& patientList, StaffMember& currentStaff,
                     int patientIDForBill;
                     cout << "Enter Patient ID to generate a bill for: ";
                     cin >> patientIDForBill;
+                    recoverFromBadNumberInput();
                     Patient* patientForBill = patientList.findByID(patientIDForBill);
                     if (patientForBill == NULL) {
                         throw InputException("Patient ID not found.");
@@ -2721,6 +2832,7 @@ void staffModuleEntry(PatientLinkedList& patientList, StaffMember staffArray[], 
     cout << "3. Back to main menu" << endl;
     cout << "Enter choice: ";
     cin >> choice;
+    recoverFromBadNumberInput();
     cin.ignore(1000, '\n');
 
     if (choice == 1) {
@@ -2771,13 +2883,16 @@ void registerPatient(PatientLinkedList& list) {
     cout << "IC Number: "; cin.getline(ic, 20);
     fillInIfEmpty(ic, "N/A");
     cout << "Age: "; cin >> age;
+    recoverFromBadNumberInput();
     cout << "Gender (M/F): "; cin >> gender;
     cin.ignore(1000, '\n');
     cout << "Username: "; cin.getline(username, MAX_NAME_LEN);
+    stripPipeCharacters(username);
     if (strlen(username) == 0) {
 	    throw InputException("Username cannot be empty.");
 	}
 	cout << "Password: "; cin.getline(password, MAX_PASS_LEN);
+	stripPipeCharacters(password);
 	if (strlen(password) == 0) {
 	    throw InputException("Password cannot be empty.");
 	}
@@ -2855,6 +2970,7 @@ void bookAppointment(Appointment appointmentArray[], int& numberOfAppointments, 
     int doctorChoice;
     cout << "Pick a doctor (enter the number): ";
     cin >> doctorChoice;
+    recoverFromBadNumberInput();
 
     if (doctorChoice < 1 || doctorChoice > TOTAL_DOCTORS) {
         throw InputException("That is not a valid doctor choice.");
@@ -2874,6 +2990,7 @@ void bookAppointment(Appointment appointmentArray[], int& numberOfAppointments, 
     int day, month, year;
     cout << "Date (day month year, e.g. 25 6 2026): ";
     cin >> day >> month >> year;
+    recoverFromBadNumberInput();
 
     // check the day, month, year one by one instead of one big if condition
     bool dateIsBad = false;
@@ -2930,6 +3047,7 @@ void editOwnAppointment(Appointment appointmentArray[], int numberOfAppointments
     cout << "\n-- Edit My Appointment --" << endl;
     cout << "Enter your Appointment ID: ";
     cin >> apptID;
+    recoverFromBadNumberInput();
 
     for (int i = 0; i < numberOfAppointments; i++) {
         if (appointmentArray[i].getRecordID() == apptID) {
@@ -2943,11 +3061,13 @@ void editOwnAppointment(Appointment appointmentArray[], int numberOfAppointments
             cout << "2. Change Reason for Visit" << endl;
             cout << "Enter choice: ";
             cin >> editChoice;
+            recoverFromBadNumberInput();
 
             if (editChoice == 1) {
                 int day, month, year;
                 char timeSlot[10];
                 cout << "New Date (day month year): "; cin >> day >> month >> year;
+                recoverFromBadNumberInput();
                 cout << "New Time: "; cin >> timeSlot;
                 appointmentArray[i].setApptDateTime(Date(day, month, year), timeSlot);
             } else if (editChoice == 2) {
@@ -2974,6 +3094,7 @@ void cancelOwnAppointment(Appointment appointmentArray[], int& numberOfAppointme
     cout << "\n-- Cancel My Appointment --" << endl;
     cout << "Enter Appointment ID to cancel: ";
     cin >> apptID;
+    recoverFromBadNumberInput();
 
     for (int i = 0; i < numberOfAppointments; i++) {
         if (appointmentArray[i].getRecordID() == apptID) {
@@ -3018,6 +3139,7 @@ void displayOwnAppointmentsMenu(Appointment appointmentArray[], int numberOfAppo
     cout << "2. Display Only Active Bookings (Pending/Confirmed)" << endl;
     cout << "Enter choice: ";
     cin >> choice;
+    recoverFromBadNumberInput();
 
     bool found = false;
     for (int i = 0; i < numberOfAppointments; i++) {
@@ -3053,6 +3175,7 @@ void searchOwnAppointmentsMenu(Appointment appointmentArray[], int numberOfAppoi
     cout << "2. Search by Doctor Name" << endl;
     cout << "Enter choice: ";
     cin >> choice;
+    recoverFromBadNumberInput();
 
     bool found = false;
 
@@ -3060,6 +3183,7 @@ void searchOwnAppointmentsMenu(Appointment appointmentArray[], int numberOfAppoi
         int apptID;
         cout << "Enter Appointment ID: ";
         cin >> apptID;
+        recoverFromBadNumberInput();
         for (int i = 0; i < numberOfAppointments; i++) {
             if (appointmentArray[i].getPatientID() == patientID && appointmentArray[i].getRecordID() == apptID) {
                 appointmentArray[i].displayRecord();
@@ -3132,6 +3256,7 @@ void sortOwnAppointmentsMenu(Appointment appointmentArray[], int numberOfAppoint
     cout << "2. Sort by Doctor Name" << endl;
     cout << "Enter choice: ";
     cin >> choice;
+    recoverFromBadNumberInput();
 
     if (choice != 1 && choice != 2) {
         throw InputException("Invalid sort option.");
@@ -3232,6 +3357,7 @@ void customerMainMenu(Patient& currentPatient, Appointment appointmentArray[], i
         // same try/catch pattern as the Staff module: catch errors here so one bad input never crashes the whole program
         try {
             cin >> choice;
+            recoverFromBadNumberInput();
 
             switch (choice) {
                 case 1: displayMyProfile(currentPatient); break;
@@ -3244,7 +3370,7 @@ void customerMainMenu(Patient& currentPatient, Appointment appointmentArray[], i
                 case 7: sortOwnAppointmentsMenu(appointmentArray, numberOfAppointments, currentPatient.getPatientID()); break;
                 case 8: customerSummaryReportMenu(currentPatient, appointmentArray, numberOfAppointments); break;
                 case 9: viewPrescriptionsForPatient(prescriptionArray, numberOfPrescriptions, currentPatient.getPatientID()); break;
-                case 10: loadAndDisplayBill(); break;
+                case 10: loadAndDisplayBill(currentPatient.getPatientID()); break;
                 case 11: displayDoctorScheduleList(doctorScheduleList); break;
                 case 0: cout << "Logging out..." << endl; break;
                 default: cout << "Invalid choice, please try again." << endl;
@@ -3269,6 +3395,7 @@ void customerModuleEntry(PatientLinkedList& patientList, Appointment appointment
     cout << "3. Back to main menu" << endl;
     cout << "Enter choice: ";
     cin >> choice;
+    recoverFromBadNumberInput();
     cin.ignore(1000, '\n');
 
     if (choice == 1) {
@@ -3475,6 +3602,7 @@ int main() {
         // wrong we just print the message and show the menu again
         try {
             cin >> mainChoice;
+            recoverFromBadNumberInput();
 
             if (mainChoice == 1) {
                 staffModuleEntry(patientList, staffArray, numberOfStaff, appointmentArray, numberOfAppointments,
