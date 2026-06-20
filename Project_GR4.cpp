@@ -6,6 +6,8 @@
 
 using namespace std;
 
+// -------------------- SECTION 2: Global constants --------------------
+// Keeping "magic numbers" in one place makes the program easier to change later
 const int MAX_NAME_LEN     = 50;     // max length for a name
 const int MAX_PASS_LEN     = 20;     // max length for a password
 const int MAX_TEXT_LEN     = 100;    // max length for general text fields (address, diagnosis)
@@ -71,6 +73,7 @@ struct ContactInfo {
         strcpy(address, "N/A");
     }
 };
+
 
 /*
   Base class 1: Person
@@ -183,7 +186,8 @@ public:
     }
 
     virtual ~MedicalRecordBase() {
-        // left empty on purpose, but still virtual for safe polymorphic delete
+        // nothing to clean up here, just keeping the destructor virtual
+        // so the child class destructor still gets called properly
     }
 
     virtual void displayRecord() const {
@@ -199,7 +203,6 @@ public:
 };
 
 
-
 /*
   Derived class 1: Patient (inherits from Person)
   --------------------------------------------------
@@ -208,7 +211,7 @@ class Patient : public Person {
 private:
     int  patientID;
     Date admissionDate;
-    int  wardNo;
+    int  wardNumber;
     char diagnosis[MAX_TEXT_LEN];
     char assignedDoctor[MAX_NAME_LEN];
     char patientStatus[20];   // "Admitted" or "Discharged"
@@ -217,7 +220,7 @@ public:
     // Constructor 1 (default) - satisfies "at least 1 constructor per module"
     Patient() : Person() {
         patientID = 0;
-        wardNo = 0;
+        wardNumber = 0;
         strcpy(diagnosis, "N/A");
         strcpy(assignedDoctor, "N/A");
         strcpy(patientStatus, "Admitted");
@@ -230,7 +233,7 @@ public:
         : Person(n, ic, a, g, user, pass) {
         patientID = id;
         admissionDate = admDate;
-        wardNo = ward;
+        wardNumber = ward;
         strcpy(diagnosis, diag);
         strcpy(assignedDoctor, doctor);
         strcpy(patientStatus, "Admitted");
@@ -250,14 +253,14 @@ public:
         admissionDate.toString(dateStr);
         cout << "[Patient] ID:" << patientID << " | Name:" << name
              << " | Age:" << age << " | Gender:" << gender
-             << " | Ward:" << wardNo << " | Doctor:" << assignedDoctor
+             << " | Ward:" << wardNumber << " | Doctor:" << assignedDoctor
              << " | Admitted:" << dateStr << " | Status:" << patientStatus
              << endl;
     }
 
     // ---- getters / setters used later by LinkedList, sorting, searching, file I/O ----
     int  getPatientID()      const { return patientID; }
-    int  getWardNo()         const { return wardNo; }
+    int  getWardNumber()         const { return wardNumber; }
     Date getAdmissionDate()  const { return admissionDate; }
     const char* getDiagnosis()      const { return diagnosis; }
     const char* getAssignedDoctor() const { return assignedDoctor; }
@@ -265,14 +268,14 @@ public:
 
     void setDiagnosis(const char* d)      { strcpy(diagnosis, d); }
     void setAssignedDoctor(const char* d) { strcpy(assignedDoctor, d); }
-    void setWardNo(int w)                 { wardNo = w; }
+    void setWardNumber(int w)                 { wardNumber = w; }
     void setPatientStatus(const char* s)  { strcpy(patientStatus, s); }
 
     // friend function declaration (1 of the 4 required friend functions)
     friend void printPatientBillingSlip(const Patient& p);
 
     // friend function declaration (4th friend function - needs access to
-    // BOTH Patient's private wardNo AND StaffMember's private role, which
+    // BOTH Patient's private wardNumber AND StaffMember's private role, which
     // is why it must be declared friend in both classes)
     friend bool transferPatientWard(Patient& p, const class StaffMember& approver, int newWard);
 };
@@ -383,6 +386,16 @@ public:
     const char* getDoctorName() const { return doctorName; }
     const char* getTimeSlot()   const { return timeSlot; }
     const char* getReason()     const { return reason; }
+
+    // Member 4 added these two setters so a Customer can edit their own
+    // appointment (change the date/time, or change the reason for visit)
+    void setApptDateTime(Date newDate, const char* newTime) {
+        appointmentDate = newDate;
+        strcpy(timeSlot, newTime);
+    }
+    void setReason(const char* newReason) {
+        strcpy(reason, newReason);
+    }
 
     // friend function declaration
     friend void printAppointmentSlip(const Appointment& a);
@@ -504,6 +517,19 @@ public:
         return NULL;
     }
 
+    // Member 4 added this: search by username instead of ID, used for
+    // Patient login (a patient logs in with username, not with their ID)
+    Patient* findByUsername(const char* username) {
+        PatientNode* current = head;
+        while (current != NULL) {
+            if (strcmp(current->data.getUsername(), username) == 0) {
+                return &(current->data);
+            }
+            current = current->next;
+        }
+        return NULL;
+    }
+
     int getCount() const { return count; }
 
     // Copy the contents of the linked list into a plain array.
@@ -513,11 +539,11 @@ public:
     // linked list step by step. So our strategy is: keep the data in a linked
     // list for everyday add/remove operations, but copy it into an array
     // whenever we need to sort or search - this is a common real-world pattern.
-    int copyToArray(Patient arr[], int maxSize) const {
+    int copyToArray(Patient patientArray[], int maxSize) const {
         PatientNode* current = head;
         int i = 0;
         while (current != NULL && i < maxSize) {
-            arr[i] = current->data;
+            patientArray[i] = current->data;
             i++;
             current = current->next;
         }
@@ -526,12 +552,13 @@ public:
 };
 
 
+
 // Friend function 1: prints a patient's billing slip, directly accessing private data
 void printPatientBillingSlip(const Patient& p) {
     cout << "----------- BILLING SLIP -----------" << endl;
     cout << "Patient ID  : " << p.patientID << endl;   // direct access to private member
     cout << "Name        : " << p.name << endl;        // this is the friend's special access
-    cout << "Ward No     : " << p.wardNo << endl;
+    cout << "Ward No     : " << p.wardNumber << endl;
     cout << "Doctor      : " << p.assignedDoctor << endl;
     cout << "-------------------------------------" << endl;
 }
@@ -555,65 +582,61 @@ void printAppointmentSlip(const Appointment& a) {
 
 /* Friend function 4: lets an approving Staff member (must be a Doctor or
    Admin) move a Patient to a different ward. This needs friend access to
-   BOTH classes: Patient's private wardNo, and StaffMember's private role. */
+   BOTH classes: Patient's private wardNumber, and StaffMember's private role. */
 bool transferPatientWard(Patient& p, const StaffMember& approver, int newWard) {
     // only Doctor or Admin roles may approve a ward transfer
     if (strcmp(approver.role, "Doctor") != 0 && strcmp(approver.role, "Admin") != 0) {
         return false;
     }
-    p.wardNo = newWard;   // direct write to Patient's private member, allowed because friend
+    p.wardNumber = newWard;   // direct write to Patient's private member, allowed because friend
     return true;
 }
 
 
 /*
-  How Selection Sort works, in plain English:
-  We walk through the array from left to right. At each position i, we look
-  at every remaining element (from i to the end) and find the "best" one
-  based on whichever criteria we picked (name / ward number / patient ID).
-  Then we swap that best element into position i. Repeat for every position
-  until the whole array is sorted. This algorithm is O(n^2), which is fine
-  for a hospital system with a few hundred patients.
+  This function sorts the patient array using Selection Sort.
+  Selection Sort just means: look through the list, find the smallest
+  (or best) one, put it at the front, then look at what is left and do
+  the same thing again, over and over until everything is sorted.
 
-  criteria parameter meaning:
-    1 = sort by patient name (alphabetical order, A to Z)
-    2 = sort by ward number (smallest to largest)
-    3 = sort by patient ID (smallest to largest) - used internally to
-        prepare the array before calling Binary Search
+  criteria meaning:
+    1 = sort by patient name
+    2 = sort by ward number
+    3 = sort by patient ID (we use this one before doing Binary Search)
 */
-void selectionSortPatients(Patient arr[], int n, int criteria) {
-    for (int i = 0; i < n - 1; i++) {
-        int bestIndex = i;   // assume position i already holds the best value for now
+void selectionSortPatients(Patient patientArray[], int totalPatients, int criteria) {
+    for (int i = 0; i < totalPatients - 1; i++) {
+        int bestIndex = i;   // for now we think position i is the best one
 
-        for (int j = i + 1; j < n; j++) {
+        for (int j = i + 1; j < totalPatients; j++) {
             bool jIsBetter = false;
 
             if (criteria == 1) {
-                // strcmp returns a negative number when arr[j]'s name comes
-                // before arr[bestIndex]'s name alphabetically
-                if (strcmp(arr[j].getName(), arr[bestIndex].getName()) < 0) {
+                // strcmp gives a negative number if the name at j comes
+                // first in alphabet order
+                if (strcmp(patientArray[j].getName(), patientArray[bestIndex].getName()) < 0) {
                     jIsBetter = true;
                 }
             } else if (criteria == 2) {
-                if (arr[j].getWardNo() < arr[bestIndex].getWardNo()) {
+                if (patientArray[j].getWardNumber() < patientArray[bestIndex].getWardNumber()) {
                     jIsBetter = true;
                 }
             } else if (criteria == 3) {
-                if (arr[j].getPatientID() < arr[bestIndex].getPatientID()) {
+                if (patientArray[j].getPatientID() < patientArray[bestIndex].getPatientID()) {
                     jIsBetter = true;
                 }
             }
 
-            if (jIsBetter) {
+            if (jIsBetter == true) {
                 bestIndex = j;
             }
         }
 
-        // only swap if we actually found something better than position i
+        // swap only if we found someone better than position i
         if (bestIndex != i) {
-            Patient temp = arr[i];
-            arr[i] = arr[bestIndex];
-            arr[bestIndex] = temp;
+            Patient temporaryPatient = patientArray[i];
+            patientArray[i] = patientArray[bestIndex];
+            patientArray[bestIndex] = temporaryPatient;
         }
     }
 }
@@ -630,13 +653,13 @@ void selectionSortPatients(Patient arr[], int n, int criteria) {
 
   Returns the array index of the patient if found, or -1 if not found.
 */
-int binarySearchPatientByID(Patient arr[], int n, int targetID) {
+int binarySearchPatientByID(Patient patientArray[], int totalPatients, int targetID) {
     int low = 0;
-    int high = n - 1;
+    int high = totalPatients - 1;
 
     while (low <= high) {
         int mid = (low + high) / 2;
-        int midID = arr[mid].getPatientID();
+        int midID = patientArray[mid].getPatientID();
 
         if (midID == targetID) {
             return mid;             // found it
@@ -648,7 +671,6 @@ int binarySearchPatientByID(Patient arr[], int n, int targetID) {
     }
     return -1;   // not found
 }
-
 
 
 /*
@@ -697,7 +719,7 @@ void savePatientsToFile(const PatientLinkedList& list, const char* filename) {
                 << temp[i].getPhone() << "|"
                 << temp[i].getAddress() << "|"
                 << d.day << "|" << d.month << "|" << d.year << "|"
-                << temp[i].getWardNo() << "|"
+                << temp[i].getWardNumber() << "|"
                 << temp[i].getDiagnosis() << "|"
                 << temp[i].getAssignedDoctor() << "|"
                 << temp[i].getPatientStatus() << "\n";
@@ -753,29 +775,29 @@ void loadPatientsFromFile(PatientLinkedList& list, const char* filename) {
 // only requires ONE dynamic non-primitive structure overall, and we already
 // used a linked list for Patients, so a simple array is enough here.
 // ---------------------------------------------------------------------------
-void saveStaffToFile(StaffMember arr[], int n, const char* filename) {
+void saveStaffToFile(StaffMember staffArray[], int numberOfStaffToSave, const char* filename) {
     ofstream outFile(filename);
     if (!outFile.is_open()) {
         throw FileException("Could not open staff file for writing.");
     }
-    for (int i = 0; i < n; i++) {
-        Date d = arr[i].getDateJoined();
-        outFile << arr[i].getStaffID() << "|"
-                << arr[i].getName() << "|"
-                << arr[i].getIC() << "|"
-                << arr[i].getAge() << "|"
-                << arr[i].getGenderChar() << "|"
-                << arr[i].getUsername() << "|"
-                << arr[i].getPassword() << "|"
-                << arr[i].getPhone() << "|"
-                << arr[i].getAddress() << "|"
-                << arr[i].getRole() << "|"
-                << d.day << "|" << d.month << "|" << d.year << "\n";
+    for (int i = 0; i < numberOfStaffToSave; i++) {
+        Date d = staffArray[i].getDateJoined();
+        outFile << staffArray[i].getStaffID() << "|"
+                << staffArray[i].getName() << "|"
+                << staffArray[i].getIC() << "|"
+                << staffArray[i].getAge() << "|"
+                << staffArray[i].getGenderChar() << "|"
+                << staffArray[i].getUsername() << "|"
+                << staffArray[i].getPassword() << "|"
+                << staffArray[i].getPhone() << "|"
+                << staffArray[i].getAddress() << "|"
+                << staffArray[i].getRole() << "|"
+                << d.day << "|" << d.month << "|" << d.year << "\numberOfStaffToSave";
     }
     outFile.close();
 }
 
-int loadStaffFromFile(StaffMember arr[], int maxSize, const char* filename) {
+int loadStaffFromFile(StaffMember staffArray[], int maxSize, const char* filename) {
     ifstream inFile(filename);
     if (!inFile.is_open()) {
         return 0;   // no staff file yet, that's fine
@@ -805,7 +827,7 @@ int loadStaffFromFile(StaffMember arr[], int maxSize, const char* filename) {
         StaffMember s(id, name, ic, age, gender, username, password, role, joined);
         s.setContact(phone, address);
 
-        arr[count] = s;
+        staffArray[count] = s;
         count++;
     }
     inFile.close();
@@ -819,25 +841,25 @@ int loadStaffFromFile(StaffMember arr[], int maxSize, const char* filename) {
 // appointment it goes in here, and Staff reads the same file, which is how
 // "record consistency" between the two modules is achieved.
 // ---------------------------------------------------------------------------
-void saveAppointmentsToFile(Appointment arr[], int n, const char* filename) {
+void saveAppointmentsToFile(Appointment appointmentArray[], int numberOfAppointmentsToSave, const char* filename) {
     ofstream outFile(filename);
     if (!outFile.is_open()) {
         throw FileException("Could not open appointments file for writing.");
     }
-    for (int i = 0; i < n; i++) {
-        Date d = arr[i].getApptDate();
-        outFile << arr[i].getRecordID() << "|"
-                << arr[i].getPatientID() << "|"
-                << arr[i].getDoctorName() << "|"
+    for (int i = 0; i < numberOfAppointmentsToSave; i++) {
+        Date d = appointmentArray[i].getApptDate();
+        outFile << appointmentArray[i].getRecordID() << "|"
+                << appointmentArray[i].getPatientID() << "|"
+                << appointmentArray[i].getDoctorName() << "|"
                 << d.day << "|" << d.month << "|" << d.year << "|"
-                << arr[i].getTimeSlot() << "|"
-                << arr[i].getReason() << "|"
-                << arr[i].getStatus() << "\n";
+                << appointmentArray[i].getTimeSlot() << "|"
+                << appointmentArray[i].getReason() << "|"
+                << appointmentArray[i].getStatus() << "\n";
     }
     outFile.close();
 }
 
-int loadAppointmentsFromFile(Appointment arr[], int maxSize, const char* filename) {
+int loadAppointmentsFromFile(Appointment appointmentArray[], int maxSize, const char* filename) {
     ifstream inFile(filename);
     if (!inFile.is_open()) {
         return 0;
@@ -863,7 +885,7 @@ int loadAppointmentsFromFile(Appointment arr[], int maxSize, const char* filenam
         Appointment a(recID, patID, doctor, apptDate, timeSlot, reason);
         a.setStatus(status);
 
-        arr[count] = a;
+        appointmentArray[count] = a;
         count++;
     }
     inFile.close();
@@ -906,11 +928,17 @@ void generateAndSavePatientSummary(const PatientLinkedList& list, const char* fi
     Patient temp[MAX_PATIENTS];
     int total = list.copyToArray(temp, MAX_PATIENTS);
 
+    // Member 4 note: there are now THREE possible statuses, not just two -
+    // "Registered" (self-registered but not yet admitted to a ward),
+    // "Admitted", and "Discharged" - so we count all three separately
+    int registeredCount = 0;
     int admittedCount = 0;
     int dischargedCount = 0;
     for (int i = 0; i < total; i++) {
         if (strcmp(temp[i].getPatientStatus(), "Admitted") == 0) {
             admittedCount++;
+        } else if (strcmp(temp[i].getPatientStatus(), "Registered") == 0) {
+            registeredCount++;
         } else {
             dischargedCount++;
         }
@@ -923,6 +951,7 @@ void generateAndSavePatientSummary(const PatientLinkedList& list, const char* fi
 
     outFile << "===== HOSPITAL PATIENT SUMMARY REPORT =====\n";
     outFile << "Total Patients     : " << total << "\n";
+    outFile << "Registered Only    : " << registeredCount << "\n";
     outFile << "Currently Admitted : " << admittedCount << "\n";
     outFile << "Discharged         : " << dischargedCount << "\n";
     outFile << "=============================================\n";
@@ -931,6 +960,7 @@ void generateAndSavePatientSummary(const PatientLinkedList& list, const char* fi
     // Also show the same report on screen right away
     cout << "===== HOSPITAL PATIENT SUMMARY REPORT =====" << endl;
     cout << "Total Patients     : " << total << endl;
+    cout << "Registered Only    : " << registeredCount << endl;
     cout << "Currently Admitted : " << admittedCount << endl;
     cout << "Discharged         : " << dischargedCount << endl;
     cout << "=============================================" << endl;
@@ -952,7 +982,6 @@ void loadAndDisplaySummary(const char* filename) {
 }
 
 
-
 class InputException {
 private:
     char message[200];
@@ -964,8 +993,6 @@ public:
         return message;
     }
 };
-
-
 
 
 // Works out the next free Patient ID by looking at the highest ID currently
@@ -983,8 +1010,8 @@ int generateNextPatientID(const PatientLinkedList& list) {
 }
 
 // ---- Registration ----
-void registerStaff(StaffMember staffArr[], int& staffCount, int maxSize) {
-    if (staffCount >= maxSize) {
+void registerStaff(StaffMember staffArray[], int& numberOfStaff, int maxSize) {
+    if (numberOfStaff >= maxSize) {
         cout << "Staff list is full, cannot register more." << endl;
         return;
     }
@@ -1009,14 +1036,14 @@ void registerStaff(StaffMember staffArr[], int& staffCount, int maxSize) {
     cout << "Address: "; cin.getline(address, MAX_TEXT_LEN);
 
     // make sure the username is not already taken by another staff member
-    for (int i = 0; i < staffCount; i++) {
-        if (strcmp(staffArr[i].getUsername(), username) == 0) {
+    for (int i = 0; i < numberOfStaff; i++) {
+        if (strcmp(staffArray[i].getUsername(), username) == 0) {
             cout << "Username already taken. Registration cancelled." << endl;
             return;
         }
     }
 
-    int newID = 2000 + staffCount + 1;
+    int newID = 2000 + numberOfStaff + 1;
     time_t now = time(0);
     tm* ltm = localtime(&now);
     Date joined(ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900);
@@ -1024,25 +1051,25 @@ void registerStaff(StaffMember staffArr[], int& staffCount, int maxSize) {
     StaffMember newStaff(newID, name, ic, age, gender, username, password, role, joined);
     newStaff.setContact(phone, address);
 
-    staffArr[staffCount] = newStaff;
-    staffCount++;
+    staffArray[numberOfStaff] = newStaff;
+    numberOfStaff++;
 
-    saveStaffToFile(staffArr, staffCount, FILE_STAFF);
+    saveStaffToFile(staffArray, numberOfStaff, FILE_STAFF);
     cout << "Registration successful! Your Staff ID is " << newID << endl;
 }
 
 // ---- Login ----
 // Returns the array index of the staff member if login is correct, or -1 if not
-int staffLoginPrompt(StaffMember staffArr[], int staffCount) {
+int staffLoginPrompt(StaffMember staffArray[], int numberOfStaff) {
     char username[MAX_NAME_LEN], password[MAX_PASS_LEN];
     cout << "\n-- Staff Login --" << endl;
     cout << "Username: "; cin >> username;
     cout << "Password: "; cin >> password;
 
-    for (int i = 0; i < staffCount; i++) {
-        if (verifyStaffLogin(staffArr[i], username, password)) {
-            cout << "Login successful. Welcome, " << staffArr[i].getName()
-                 << " (" << staffArr[i].getRole() << ")" << endl;
+    for (int i = 0; i < numberOfStaff; i++) {
+        if (verifyStaffLogin(staffArray[i], username, password)) {
+            cout << "Login successful. Welcome, " << staffArray[i].getName()
+                 << " (" << staffArray[i].getRole() << ")" << endl;
             return i;
         }
     }
@@ -1104,13 +1131,13 @@ void editPatientRecord(PatientLinkedList& list) {
     cout << "Enter Patient ID to edit: ";
     cin >> id;
 
-    Patient* p = list.findByID(id);
-    if (p == NULL) {
+    Patient* targetPatient = list.findByID(id);
+    if (targetPatient == NULL) {
         throw InputException("Patient ID not found.");
     }
 
     cout << "Current record:" << endl;
-    p->displayInfo();
+    targetPatient->displayInfo();
 
     int editChoice;
     cout << "\nWhat do you want to edit?" << endl;
@@ -1125,19 +1152,19 @@ void editPatientRecord(PatientLinkedList& list) {
     if (editChoice == 1) {
         char newDiag[MAX_TEXT_LEN];
         cout << "New Diagnosis: "; cin.getline(newDiag, MAX_TEXT_LEN);
-        p->setDiagnosis(newDiag);
+        targetPatient->setDiagnosis(newDiag);
     } else if (editChoice == 2) {
         char newDoc[MAX_NAME_LEN];
         cout << "New Assigned Doctor: "; cin.getline(newDoc, MAX_NAME_LEN);
-        p->setAssignedDoctor(newDoc);
+        targetPatient->setAssignedDoctor(newDoc);
     } else if (editChoice == 3) {
         int newWard;
         cout << "New Ward Number: "; cin >> newWard;
-        p->setWardNo(newWard);
+        targetPatient->setWardNumber(newWard);
     } else if (editChoice == 4) {
         char newStatus[20];
         cout << "New Status (Admitted/Discharged): "; cin >> newStatus;
-        p->setPatientStatus(newStatus);
+        targetPatient->setPatientStatus(newStatus);
     } else {
         throw InputException("Invalid edit option.");
     }
@@ -1154,7 +1181,7 @@ void deletePatientRecord(PatientLinkedList& list) {
     cin >> id;
 
     bool removed = list.deleteByID(id);
-    if (!removed) {
+    if (removed == false) {
         throw InputException("Patient ID not found, nothing deleted.");
     }
 
@@ -1171,19 +1198,19 @@ void searchPatientMenu(const PatientLinkedList& list) {
     cout << "Enter choice: ";
     cin >> searchChoice;
 
-    Patient arr[MAX_PATIENTS];
-    int total = list.copyToArray(arr, MAX_PATIENTS);
+    Patient patientArray[MAX_PATIENTS];
+    int total = list.copyToArray(patientArray, MAX_PATIENTS);
 
     if (searchChoice == 1) {
         int id;
         cout << "Enter Patient ID: ";
         cin >> id;
-        selectionSortPatients(arr, total, 3);   // Binary Search needs the array sorted by ID first
-        int idx = binarySearchPatientByID(arr, total, id);
+        selectionSortPatients(patientArray, total, 3);   // Binary Search needs the array sorted by ID first
+        int idx = binarySearchPatientByID(patientArray, total, id);
         if (idx == -1) {
             throw InputException("No patient found with that ID.");
         }
-        arr[idx].displayInfo();
+        patientArray[idx].displayInfo();
 
     } else if (searchChoice == 2) {
         char name[MAX_NAME_LEN];
@@ -1194,13 +1221,13 @@ void searchPatientMenu(const PatientLinkedList& list) {
         bool found = false;
         for (int i = 0; i < total; i++) {
             // strstr() is a plain C string function (checks if "name" is a
-            // substring of arr[i]'s name) - not an STL search function
-            if (strstr(arr[i].getName(), name) != NULL) {
-                arr[i].displayInfo();
+            // substring of patientArray[i]'s name) - not an STL search function
+            if (strstr(patientArray[i].getName(), name) != NULL) {
+                patientArray[i].displayInfo();
                 found = true;
             }
         }
-        if (!found) {
+        if (found == false) {
             throw InputException("No patient found with that name.");
         }
     } else {
@@ -1221,13 +1248,13 @@ void sortPatientsMenu(PatientLinkedList& list) {
         throw InputException("Invalid sort option.");
     }
 
-    Patient arr[MAX_PATIENTS];
-    int total = list.copyToArray(arr, MAX_PATIENTS);
-    selectionSortPatients(arr, total, sortChoice);
+    Patient patientArray[MAX_PATIENTS];
+    int total = list.copyToArray(patientArray, MAX_PATIENTS);
+    selectionSortPatients(patientArray, total, sortChoice);
 
     cout << "\n-- Sorted Result --" << endl;
     for (int i = 0; i < total; i++) {
-        arr[i].displayInfo();
+        patientArray[i].displayInfo();
     }
 }
 
@@ -1244,30 +1271,30 @@ void staffSummaryReportMenu(const PatientLinkedList& list) {
 
 // ---- Appointment management (extra feature: keeps Staff aware of bookings
 // made by Customers, which is part of the "record consistency" requirement) ----
-void viewAllAppointments(Appointment arr[], int count) {
+void viewAllAppointments(Appointment appointmentArray[], int numberOfAppointments) {
     cout << "\n-- All Appointments --" << endl;
-    if (count == 0) {
+    if (numberOfAppointments == 0) {
         cout << "No appointments found." << endl;
         return;
     }
-    for (int i = 0; i < count; i++) {
-        arr[i].displayRecord();
+    for (int i = 0; i < numberOfAppointments; i++) {
+        appointmentArray[i].displayRecord();
     }
 }
 
-void updateAppointmentStatusMenu(Appointment arr[], int count) {
+void updateAppointmentStatusMenu(Appointment appointmentArray[], int numberOfAppointments) {
     int recID;
     cout << "\n-- Update Appointment Status --" << endl;
     cout << "Enter Appointment ID: ";
     cin >> recID;
 
-    for (int i = 0; i < count; i++) {
-        if (arr[i].getRecordID() == recID) {
+    for (int i = 0; i < numberOfAppointments; i++) {
+        if (appointmentArray[i].getRecordID() == recID) {
             char newStatus[20];
             cout << "New Status (Pending/Confirmed/Completed/Cancelled): ";
             cin >> newStatus;
-            arr[i].setStatus(newStatus);
-            saveAppointmentsToFile(arr, count, FILE_APPOINTMENTS);
+            appointmentArray[i].setStatus(newStatus);
+            saveAppointmentsToFile(appointmentArray, numberOfAppointments, FILE_APPOINTMENTS);
             cout << "Appointment status updated." << endl;
             return;
         }
@@ -1284,13 +1311,13 @@ void approveWardTransferMenu(PatientLinkedList& list, const StaffMember& approve
     cout << "New Ward Number: ";
     cin >> newWard;
 
-    Patient* p = list.findByID(id);
-    if (p == NULL) {
+    Patient* targetPatient = list.findByID(id);
+    if (targetPatient == NULL) {
         throw InputException("Patient ID not found.");
     }
 
-    bool success = transferPatientWard(*p, approver, newWard);
-    if (!success) {
+    bool success = transferPatientWard(*targetPatient, approver, newWard);
+    if (success == false) {
         cout << "Only Admin or Doctor roles can approve a ward transfer." << endl;
         return;
     }
@@ -1301,7 +1328,7 @@ void approveWardTransferMenu(PatientLinkedList& list, const StaffMember& approve
 
 // ---- Main Staff menu loop (shown after a successful login) ----
 void staffMainMenu(PatientLinkedList& patientList, StaffMember& currentStaff,
-                    Appointment apptArr[], int apptCount) {
+                    Appointment appointmentArray[], int numberOfAppointments) {
     int choice = -1;
 
     do {
@@ -1333,8 +1360,8 @@ void staffMainMenu(PatientLinkedList& patientList, StaffMember& currentStaff,
                 case 5:  searchPatientMenu(patientList); break;
                 case 6:  sortPatientsMenu(patientList); break;
                 case 7:  staffSummaryReportMenu(patientList); break;
-                case 8:  viewAllAppointments(apptArr, apptCount); break;
-                case 9:  updateAppointmentStatusMenu(apptArr, apptCount); break;
+                case 8:  viewAllAppointments(appointmentArray, numberOfAppointments); break;
+                case 9:  updateAppointmentStatusMenu(appointmentArray, numberOfAppointments); break;
                 case 10: approveWardTransferMenu(patientList, currentStaff); break;
                 case 0:  cout << "Logging out..." << endl; break;
                 default: cout << "Invalid choice, please try again." << endl;
@@ -1349,8 +1376,8 @@ void staffMainMenu(PatientLinkedList& patientList, StaffMember& currentStaff,
 }
 
 // ---- Entry point for the whole Staff/Admin module (Register or Login) ----
-void staffModuleEntry(PatientLinkedList& patientList, StaffMember staffArr[], int& staffCount,
-                       Appointment apptArr[], int apptCount) {
+void staffModuleEntry(PatientLinkedList& patientList, StaffMember staffArray[], int& numberOfStaff,
+                       Appointment appointmentArray[], int numberOfAppointments) {
     int choice;
     cout << "\n========== STAFF / ADMIN MODULE ==========" << endl;
     cout << "1. Register new staff account" << endl;
@@ -1360,15 +1387,492 @@ void staffModuleEntry(PatientLinkedList& patientList, StaffMember staffArr[], in
     cin >> choice;
 
     if (choice == 1) {
-        registerStaff(staffArr, staffCount, MAX_STAFF);
+        registerStaff(staffArray, numberOfStaff, MAX_STAFF);
     }
 
     if (choice == 1 || choice == 2) {
-        int loggedInIndex = staffLoginPrompt(staffArr, staffCount);
+        int loggedInIndex = staffLoginPrompt(staffArray, numberOfStaff);
         if (loggedInIndex != -1) {
-            appendLoginLog(staffArr[loggedInIndex].getUsername(), staffArr[loggedInIndex].getRole(), "LOGIN");
-            staffMainMenu(patientList, staffArr[loggedInIndex], apptArr, apptCount);
-            appendLoginLog(staffArr[loggedInIndex].getUsername(), staffArr[loggedInIndex].getRole(), "LOGOUT");
+            appendLoginLog(staffArray[loggedInIndex].getUsername(), staffArray[loggedInIndex].getRole(), "LOGIN");
+            staffMainMenu(patientList, staffArray[loggedInIndex], appointmentArray, numberOfAppointments);
+            appendLoginLog(staffArray[loggedInIndex].getUsername(), staffArray[loggedInIndex].getRole(), "LOGOUT");
+        } else {
+            cout << "Login failed. Returning to main menu." << endl;
+        }
+    } else {
+        cout << "Returning to main menu." << endl;
+    }
+}
+
+
+
+// Works out the next free Appointment ID, same idea as generateNextPatientID()
+int generateNextAppointmentID(Appointment appointmentArray[], int numberOfAppointments) {
+    int maxID = 3000;
+    for (int i = 0; i < numberOfAppointments; i++) {
+        if (appointmentArray[i].getRecordID() > maxID) {
+            maxID = appointmentArray[i].getRecordID();
+        }
+    }
+    return maxID + 1;
+}
+
+// ---- Registration ----
+// A patient registering themselves only creates a basic profile - ward,
+// diagnosis and doctor are left as "N/A" with status "Registered" because
+// those details only get filled in later by Staff when the patient is
+// actually admitted (see editPatientRecord() in the Staff module, Stage 3).
+void registerPatient(PatientLinkedList& list) {
+    char name[MAX_NAME_LEN], ic[20], username[MAX_NAME_LEN], password[MAX_PASS_LEN];
+    char phone[20], address[MAX_TEXT_LEN];
+    int age;
+    char gender;
+
+    cout << "\n-- Patient Registration --" << endl;
+    cin.ignore(1000, '\n');
+    cout << "Full Name: "; cin.getline(name, MAX_NAME_LEN);
+    cout << "IC Number: "; cin.getline(ic, 20);
+    cout << "Age: "; cin >> age;
+    cout << "Gender (M/F): "; cin >> gender;
+    cout << "Username: "; cin >> username;
+    cout << "Password: "; cin >> password;
+    cin.ignore(1000, '\n');
+    cout << "Phone: "; cin.getline(phone, 20);
+    cout << "Address: "; cin.getline(address, MAX_TEXT_LEN);
+
+    if (list.findByUsername(username) != NULL) {
+        cout << "Username already taken. Registration cancelled." << endl;
+        return;
+    }
+
+    int newID = generateNextPatientID(list);
+    time_t now = time(0);
+    tm* ltm = localtime(&now);
+    Date today(ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900);
+
+    Patient newPatient(newID, name, ic, age, gender, username, password,
+                        today, 0, "N/A", "N/A");
+    newPatient.setContact(phone, address);
+    newPatient.setPatientStatus("Registered");   // not yet admitted to a ward
+
+    list.insertAtEnd(newPatient);
+    savePatientsToFile(list, FILE_PATIENTS);
+
+    cout << "Registration successful! Your Patient ID is " << newID << endl;
+    cout << "Please visit the hospital counter to complete your admission." << endl;
+}
+
+// ---- Login ----
+// Returns a pointer to the patient's record inside the linked list if the
+// username/password is correct, or NULL if not. We search by username
+// because patients log in with a username, not with their numeric ID.
+Patient* patientLoginPrompt(PatientLinkedList& list) {
+    char username[MAX_NAME_LEN], password[MAX_PASS_LEN];
+    cout << "\n-- Patient Login --" << endl;
+    cout << "Username: "; cin >> username;
+    cout << "Password: "; cin >> password;
+
+    Patient* targetPatient = list.findByUsername(username);
+
+    // check step by step instead of putting everything in one if condition
+    if (targetPatient == NULL) {
+        return NULL;
+    }
+
+    if (strcmp(targetPatient->getPassword(), password) != 0) {
+        return NULL;
+    }
+
+    cout << "Login successful. Welcome, " << targetPatient->getName() << "!" << endl;
+    return targetPatient;
+}
+
+// ---- View own profile ----
+void displayMyProfile(const Patient& patient) {
+    cout << "\n-- My Profile --" << endl;
+    patient.displayInfo();
+}
+
+// ---- Add New Record: Book a new appointment ----
+void bookAppointment(Appointment appointmentArray[], int& numberOfAppointments, int maxArraySize, int patientID) {
+    if (numberOfAppointments >= maxArraySize) {
+        cout << "Appointment list is full, cannot book more right now." << endl;
+        return;
+    }
+
+    char doctor[MAX_NAME_LEN], timeSlot[10], reason[MAX_TEXT_LEN];
+    int day, month, year;
+
+    cout << "\n-- Book New Appointment --" << endl;
+    cin.ignore(1000, '\n');
+    cout << "Preferred Doctor: "; cin.getline(doctor, MAX_NAME_LEN);
+    cout << "Date (day month year, e.g. 25 6 2026): ";
+    cin >> day >> month >> year;
+
+    // check the day, month, year one by one instead of one big if condition
+    bool dateIsBad = false;
+    if (day < 1 || day > 31) {
+        dateIsBad = true;
+    }
+    if (month < 1 || month > 12) {
+        dateIsBad = true;
+    }
+    if (year < 2026) {
+        dateIsBad = true;
+    }
+    if (dateIsBad == true) {
+        throw InputException("Invalid date entered.");
+    }
+
+    cin.ignore(1000, '\n');
+    cout << "Preferred Time (e.g. 10:30AM): "; cin.getline(timeSlot, 10);
+    cout << "Reason for visit: "; cin.getline(reason, MAX_TEXT_LEN);
+
+    int newID = generateNextAppointmentID(appointmentArray, numberOfAppointments);
+    Date apptDate(day, month, year);
+    Appointment newAppt(newID, patientID, doctor, apptDate, timeSlot, reason);
+
+    appointmentArray[numberOfAppointments] = newAppt;
+    numberOfAppointments++;
+
+    // save immediately, so Staff sees this new booking right away the next
+    // time they open the Staff module (this is "record consistency" again)
+    saveAppointmentsToFile(appointmentArray, numberOfAppointments, FILE_APPOINTMENTS);
+    cout << "Appointment booked successfully! Appointment ID: " << newID << endl;
+}
+
+// ---- Edit/Update Record: change date/time or reason on YOUR OWN booking ----
+void editOwnAppointment(Appointment appointmentArray[], int numberOfAppointments, int patientID) {
+    int apptID;
+    cout << "\n-- Edit My Appointment --" << endl;
+    cout << "Enter your Appointment ID: ";
+    cin >> apptID;
+
+    for (int i = 0; i < numberOfAppointments; i++) {
+        if (appointmentArray[i].getRecordID() == apptID) {
+            // security check: a patient may only edit their OWN bookings,
+            // never someone else's, even if they guess the right ID
+            if (appointmentArray[i].getPatientID() != patientID) {
+                throw InputException("You can only edit your own appointments.");
+            }
+
+            int editChoice;
+            cout << "1. Change Date/Time" << endl;
+            cout << "2. Change Reason for Visit" << endl;
+            cout << "Enter choice: ";
+            cin >> editChoice;
+
+            if (editChoice == 1) {
+                int day, month, year;
+                char timeSlot[10];
+                cout << "New Date (day month year): "; cin >> day >> month >> year;
+                cout << "New Time: "; cin >> timeSlot;
+                appointmentArray[i].setApptDateTime(Date(day, month, year), timeSlot);
+            } else if (editChoice == 2) {
+                char reason[MAX_TEXT_LEN];
+                cin.ignore(1000, '\n');
+                cout << "New Reason: "; cin.getline(reason, MAX_TEXT_LEN);
+                appointmentArray[i].setReason(reason);
+            } else {
+                throw InputException("Invalid edit option.");
+            }
+
+            saveAppointmentsToFile(appointmentArray, numberOfAppointments, FILE_APPOINTMENTS);
+            cout << "Appointment updated successfully." << endl;
+            return;
+        }
+    }
+    throw InputException("Appointment not found.");
+}
+
+// ---- Delete Record: cancel YOUR OWN booking ----
+void cancelOwnAppointment(Appointment appointmentArray[], int& numberOfAppointments, int patientID) {
+    int apptID;
+    cout << "\n-- Cancel My Appointment --" << endl;
+    cout << "Enter Appointment ID to cancel: ";
+    cin >> apptID;
+
+    for (int i = 0; i < numberOfAppointments; i++) {
+        if (appointmentArray[i].getRecordID() == apptID) {
+            if (appointmentArray[i].getPatientID() != patientID) {
+                throw InputException("You can only cancel your own appointments.");
+            }
+            // shift every element after position i back by one, to close the gap
+            for (int j = i; j < numberOfAppointments - 1; j++) {
+                appointmentArray[j] = appointmentArray[j + 1];
+            }
+            numberOfAppointments--;
+            saveAppointmentsToFile(appointmentArray, numberOfAppointments, FILE_APPOINTMENTS);
+            cout << "Appointment cancelled successfully." << endl;
+            return;
+        }
+    }
+    throw InputException("Appointment not found.");
+}
+
+// ---- Display Record (2 modes: all bookings / only active bookings) ----
+void displayOwnAppointmentsMenu(Appointment appointmentArray[], int numberOfAppointments, int patientID) {
+    int choice;
+    cout << "\n-- Display My Bookings --" << endl;
+    cout << "1. Display All My Bookings" << endl;
+    cout << "2. Display Only Active Bookings (Pending/Confirmed)" << endl;
+    cout << "Enter choice: ";
+    cin >> choice;
+
+    bool found = false;
+    for (int i = 0; i < numberOfAppointments; i++) {
+        if (appointmentArray[i].getPatientID() != patientID) {
+            continue;   // skip bookings that belong to other patients
+        }
+        if (choice == 2) {
+            // check if this booking is "active" by comparing the status text
+            // one by one, instead of doing it in one line
+            bool isActive = false;
+            if (strcmp(appointmentArray[i].getStatus(), "Pending") == 0) {
+                isActive = true;
+            }
+            if (strcmp(appointmentArray[i].getStatus(), "Confirmed") == 0) {
+                isActive = true;
+            }
+            if (isActive == false) {
+                continue;
+            }
+        }
+        appointmentArray[i].displayRecord();
+        found = true;
+    }
+    if (found == false) {
+        cout << "No matching bookings found." << endl;
+    }
+}
+
+// ---- Search Record (2 criteria: by Appointment ID, by Doctor Name) ----
+void searchOwnAppointmentsMenu(Appointment appointmentArray[], int numberOfAppointments, int patientID) {
+    int choice;
+    cout << "\n-- Search My Bookings --" << endl;
+    cout << "1. Search by Appointment ID" << endl;
+    cout << "2. Search by Doctor Name" << endl;
+    cout << "Enter choice: ";
+    cin >> choice;
+
+    bool found = false;
+
+    if (choice == 1) {
+        int apptID;
+        cout << "Enter Appointment ID: ";
+        cin >> apptID;
+        for (int i = 0; i < numberOfAppointments; i++) {
+            if (appointmentArray[i].getPatientID() == patientID && appointmentArray[i].getRecordID() == apptID) {
+                appointmentArray[i].displayRecord();
+                found = true;
+            }
+        }
+    } else if (choice == 2) {
+        char doctor[MAX_NAME_LEN];
+        cin.ignore(1000, '\n');
+        cout << "Enter Doctor Name (or part of it): ";
+        cin.getline(doctor, MAX_NAME_LEN);
+        for (int i = 0; i < numberOfAppointments; i++) {
+            if (appointmentArray[i].getPatientID() == patientID && strstr(appointmentArray[i].getDoctorName(), doctor) != NULL) {
+                appointmentArray[i].displayRecord();
+                found = true;
+            }
+        }
+    } else {
+        throw InputException("Invalid search option.");
+    }
+
+    if (found == false) {
+        throw InputException("No matching bookings found.");
+    }
+}
+
+// ---- Sort Records (2 criteria: by Date, by Doctor Name) ----
+// This is a SEPARATE Selection Sort from selectionSortPatients() in Stage 2,
+// because it sorts an array of Appointment objects instead of Patient
+// objects - same algorithm idea, different data type.
+void selectionSortAppointments(Appointment appointmentArray[], int totalAppointments, int criteria) {
+    for (int i = 0; i < totalAppointments - 1; i++) {
+        int bestIndex = i;
+
+        for (int j = i + 1; j < totalAppointments; j++) {
+            bool jIsBetter = false;
+
+            if (criteria == 1) {
+                // sort by date: turn each date into one comparable number,
+                // e.g. 2026-06-25 becomes 20260625, so smaller number = earlier date
+                Date dj = appointmentArray[j].getApptDate();
+                Date db = appointmentArray[bestIndex].getApptDate();
+                int valJ = dj.year * 10000 + dj.month * 100 + dj.day;
+                int valB = db.year * 10000 + db.month * 100 + db.day;
+                if (valJ < valB) {
+                    jIsBetter = true;
+                }
+            } else if (criteria == 2) {
+                if (strcmp(appointmentArray[j].getDoctorName(), appointmentArray[bestIndex].getDoctorName()) < 0) {
+                    jIsBetter = true;
+                }
+            }
+
+            if (jIsBetter) {
+                bestIndex = j;
+            }
+        }
+
+        if (bestIndex != i) {
+            Appointment temp = appointmentArray[i];
+            appointmentArray[i] = appointmentArray[bestIndex];
+            appointmentArray[bestIndex] = temp;
+        }
+    }
+}
+
+void sortOwnAppointmentsMenu(Appointment appointmentArray[], int numberOfAppointments, int patientID) {
+    int choice;
+    cout << "\n-- Sort My Bookings --" << endl;
+    cout << "1. Sort by Date" << endl;
+    cout << "2. Sort by Doctor Name" << endl;
+    cout << "Enter choice: ";
+    cin >> choice;
+
+    if (choice != 1 && choice != 2) {
+        throw InputException("Invalid sort option.");
+    }
+
+    // pull out only THIS patient's own bookings into a separate temporary
+    // array before sorting, so we never disturb other patients' bookings
+    Appointment temp[MAX_APPOINTMENTS];
+    int total = 0;
+    for (int i = 0; i < numberOfAppointments; i++) {
+        if (appointmentArray[i].getPatientID() == patientID) {
+            temp[total] = appointmentArray[i];
+            total++;
+        }
+    }
+
+    if (total == 0) {
+        cout << "You have no bookings to sort." << endl;
+        return;
+    }
+
+    selectionSortAppointments(temp, total, choice);
+
+    cout << "\n-- Sorted Result --" << endl;
+    for (int i = 0; i < total; i++) {
+        temp[i].displayRecord();
+    }
+}
+
+// ---- Summary Report (display + save to txt + read back from txt) ----
+void generateAndSaveBookingSummary(const Patient& patient, Appointment appointmentArray[], int numberOfAppointments, const char* filename) {
+    int total = 0, pending = 0, confirmed = 0, completed = 0, cancelled = 0;
+
+    for (int i = 0; i < numberOfAppointments; i++) {
+        if (appointmentArray[i].getPatientID() == patient.getPatientID()) {
+            total++;
+            if (strcmp(appointmentArray[i].getStatus(), "Pending") == 0) pending++;
+            else if (strcmp(appointmentArray[i].getStatus(), "Confirmed") == 0) confirmed++;
+            else if (strcmp(appointmentArray[i].getStatus(), "Completed") == 0) completed++;
+            else if (strcmp(appointmentArray[i].getStatus(), "Cancelled") == 0) cancelled++;
+        }
+    }
+
+    ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        throw FileException("Could not open summary report file for writing.");
+    }
+
+    outFile << "===== BOOKING SUMMARY FOR " << patient.getName() << " =====\n";
+    outFile << "Total Bookings : " << total << "\n";
+    outFile << "Pending        : " << pending << "\n";
+    outFile << "Confirmed      : " << confirmed << "\n";
+    outFile << "Completed      : " << completed << "\n";
+    outFile << "Cancelled      : " << cancelled << "\n";
+    outFile << "=====================================\n";
+    outFile.close();
+
+    cout << "===== BOOKING SUMMARY FOR " << patient.getName() << " =====" << endl;
+    cout << "Total Bookings : " << total << endl;
+    cout << "Pending        : " << pending << endl;
+    cout << "Confirmed      : " << confirmed << endl;
+    cout << "Completed      : " << completed << endl;
+    cout << "Cancelled      : " << cancelled << endl;
+    cout << "=====================================" << endl;
+}
+
+void customerSummaryReportMenu(const Patient& patient, Appointment appointmentArray[], int numberOfAppointments) {
+    generateAndSaveBookingSummary(patient, appointmentArray, numberOfAppointments, FILE_SUMMARY);
+    cout << "\nView the saved report from file as well? (Y/N): ";
+    char ans;
+    cin >> ans;
+    if (ans == 'Y' || ans == 'y') {
+        loadAndDisplaySummary(FILE_SUMMARY);
+    }
+}
+
+// ---- Main Customer menu loop (shown after a successful login) ----
+void customerMainMenu(Patient& currentPatient, Appointment appointmentArray[], int& numberOfAppointments) {
+    int choice = -1;
+
+    do {
+        cout << "\n========== CUSTOMER MENU (" << currentPatient.getName() << ") ==========" << endl;
+        cout << "1. View My Profile" << endl;
+        cout << "2. Book New Appointment" << endl;
+        cout << "3. Edit My Appointment" << endl;
+        cout << "4. Cancel My Appointment" << endl;
+        cout << "5. Display My Bookings" << endl;
+        cout << "6. Search My Bookings" << endl;
+        cout << "7. Sort My Bookings" << endl;
+        cout << "8. Generate / View Booking Summary Report" << endl;
+        cout << "0. Logout" << endl;
+        cout << "Enter choice: ";
+
+        // same try/catch pattern as the Staff module: catch errors here so
+        // one bad input never crashes the whole program
+        try {
+            cin >> choice;
+
+            switch (choice) {
+                case 1: displayMyProfile(currentPatient); break;
+                case 2: bookAppointment(appointmentArray, numberOfAppointments, MAX_APPOINTMENTS, currentPatient.getPatientID()); break;
+                case 3: editOwnAppointment(appointmentArray, numberOfAppointments, currentPatient.getPatientID()); break;
+                case 4: cancelOwnAppointment(appointmentArray, numberOfAppointments, currentPatient.getPatientID()); break;
+                case 5: displayOwnAppointmentsMenu(appointmentArray, numberOfAppointments, currentPatient.getPatientID()); break;
+                case 6: searchOwnAppointmentsMenu(appointmentArray, numberOfAppointments, currentPatient.getPatientID()); break;
+                case 7: sortOwnAppointmentsMenu(appointmentArray, numberOfAppointments, currentPatient.getPatientID()); break;
+                case 8: customerSummaryReportMenu(currentPatient, appointmentArray, numberOfAppointments); break;
+                case 0: cout << "Logging out..." << endl; break;
+                default: cout << "Invalid choice, please try again." << endl;
+            }
+        } catch (InputException& e) {
+            cout << "Input error: " << e.what() << endl;
+        } catch (FileException& e) {
+            cout << "File error: " << e.what() << endl;
+        }
+
+    } while (choice != 0);
+}
+
+// ---- Entry point for the whole Customer/Patient module (Register or Login) ----
+void customerModuleEntry(PatientLinkedList& patientList, Appointment appointmentArray[], int& numberOfAppointments) {
+    int choice;
+    cout << "\n========== CUSTOMER / PATIENT MODULE ==========" << endl;
+    cout << "1. Register new patient account" << endl;
+    cout << "2. Login" << endl;
+    cout << "3. Back to main menu" << endl;
+    cout << "Enter choice: ";
+    cin >> choice;
+
+    if (choice == 1) {
+        registerPatient(patientList);
+    }
+
+    if (choice == 1 || choice == 2) {
+        Patient* loggedInPatient = patientLoginPrompt(patientList);
+        if (loggedInPatient != NULL) {
+            appendLoginLog(loggedInPatient->getUsername(), "Patient", "LOGIN");
+            customerMainMenu(*loggedInPatient, appointmentArray, numberOfAppointments);
+            appendLoginLog(loggedInPatient->getUsername(), "Patient", "LOGOUT");
         } else {
             cout << "Login failed. Returning to main menu." << endl;
         }
@@ -1386,19 +1890,14 @@ int main() {
     patientList.insertAtEnd(Patient(1002, "Siti Aminah", "950505-08-5678", 30, 'F',
                                       "siti95", "pass456", Date(16, 3, 2026), 3, "Flu", "Dr. Lee"));
 
-    StaffMember staffArr[MAX_STAFF];
-    int staffCount = 0;
+    Appointment appointmentArray[MAX_APPOINTMENTS];
+    int numberOfAppointments = 0;
+    appointmentArray[numberOfAppointments] = Appointment(3001, 1001, "Dr. Tan", Date(20, 3, 2026), "09:00AM", "Follow-up checkup");
+    numberOfAppointments++;
 
-    Appointment apptArr[MAX_APPOINTMENTS];
-    int apptCount = 0;
-    apptArr[apptCount] = Appointment(3001, 1001, "Dr. Tan", Date(20, 3, 2026), "09:00AM", "Follow-up checkup");
-    apptCount++;
-
-    // an outer safety-net try/catch, in case an exception escapes all the way
-    // up from registerStaff() / staffLoginPrompt() (which run before the
-    // inner per-menu-choice try/catch inside staffMainMenu even starts)
+    // outer safety-net try/catch, same pattern as Stage 3's main()
     try {
-        staffModuleEntry(patientList, staffArr, staffCount, apptArr, apptCount);
+        customerModuleEntry(patientList, appointmentArray, numberOfAppointments);
     } catch (FileException& e) {
         cout << "File error: " << e.what() << endl;
     } catch (InputException& e) {
