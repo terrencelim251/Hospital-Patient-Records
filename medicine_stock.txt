@@ -1,0 +1,8 @@
+Panadol|100|0.5
+Amoxicillin|80|1.2
+Antihistamine|60|0.8
+Insulin|40|15
+Aspirin|90|0.3
+Cough Syrup|50|5.5
+Vitamin C|120|0.4
+Ibuprofen|70|0.6

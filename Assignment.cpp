@@ -556,7 +556,7 @@ void menu()
 		}
         else
         {
-            cout << "Invalid choice. Please enter a number between 1 and 9." << endl;
+            cout << "Invalid choice. Please enter a number between 1 and 13." << endl;
         }
 
     } while (choice != 13);
