@@ -1,50 +1,53 @@
-1001|Ahmad Bin Ismail|700101-10-1000|18|M|patient1001|pass1001|N/A|N/A|1|1|2026|1|Fever|Dr. Tan|Admitted
-1002|Siti Binti Yusof|710202-10-1001|19|F|patient1002|pass1002|N/A|N/A|2|2|2026|2|Flu|Dr. Lee|Admitted
-1003|Wong Mei Ling|720303-10-1002|20|M|patient1003|pass1003|N/A|N/A|3|3|2026|3|Asthma|Dr. Lim|Admitted
-1004|Kumar Raj Kumar|730404-10-1003|21|F|patient1004|pass1004|N/A|N/A|4|4|2026|4|Diabetes|Dr. Kumar|Admitted
-1005|Lee Chong Wei|740505-10-1004|22|M|patient1005|pass1005|N/A|N/A|5|5|2026|5|Hypertension|Dr. Wong|Admitted
-1006|Tan Wei Jian|750606-10-1005|23|F|patient1006|pass1006|N/A|N/A|6|6|2026|6|Migraine|Dr. Farah|Admitted
-1007|Nurul Binti Hassan|760707-10-1006|24|M|patient1007|pass1007|N/A|N/A|7|7|2026|7|Sprain|Dr. Tan|Admitted
-1008|Raj Kumar Singh|770808-10-1007|25|F|patient1008|pass1008|N/A|N/A|8|8|2026|8|Fracture|Dr. Lee|Admitted
-1009|Ahmad Bin Ismail|700101-10-1000|18|M|patient1009|pass1009|N/A|N/A|1|1|2026|1|Fever|Dr. Tan|Admitted
-1010|Siti Binti Yusof|710202-10-1001|19|F|patient1010|pass1010|N/A|N/A|2|2|2026|2|Flu|Dr. Lee|Admitted
-1011|Wong Mei Ling|720303-10-1002|20|M|patient1011|pass1011|N/A|N/A|3|3|2026|3|Asthma|Dr. Lim|Admitted
-1012|Kumar Raj Kumar|730404-10-1003|21|F|patient1012|pass1012|N/A|N/A|4|4|2026|4|Diabetes|Dr. Kumar|Admitted
-1013|Lee Chong Wei|740505-10-1004|22|M|patient1013|pass1013|N/A|N/A|5|5|2026|5|Hypertension|Dr. Wong|Admitted
-1014|Tan Wei Jian|750606-10-1005|23|F|patient1014|pass1014|N/A|N/A|6|6|2026|6|Migraine|Dr. Farah|Admitted
-1015|Nurul Binti Hassan|760707-10-1006|24|M|patient1015|pass1015|N/A|N/A|7|7|2026|7|Sprain|Dr. Tan|Admitted
-1016|Raj Kumar Singh|770808-10-1007|25|F|patient1016|pass1016|N/A|N/A|8|8|2026|8|Fracture|Dr. Lee|Admitted
-1017|Mei Hui Ling|780909-10-1008|26|M|patient1017|pass1017|N/A|N/A|9|9|2026|9|Allergy|Dr. Lim|Admitted
-1018|Hassan Bin Abu|791010-10-1009|27|F|patient1018|pass1018|N/A|N/A|10|10|2026|10|Food Poisoning|Dr. Kumar|Admitted
-1019|Farah Bin Ismail|801111-10-1010|28|M|patient1019|pass1019|N/A|N/A|11|11|2026|1|Back Pain|Dr. Wong|Admitted
-1020|Chong Binti Yusof|811212-10-1011|29|F|patient1020|pass1020|N/A|N/A|12|12|2026|2|Anemia|Dr. Farah|Admitted
-1021|Aisyah Mei Ling|820113-10-1012|30|M|patient1021|pass1021|N/A|N/A|13|1|2026|3|Fever|Dr. Tan|Admitted
-1022|Wei Raj Kumar|830214-10-1013|31|F|patient1022|pass1022|N/A|N/A|14|2|2026|4|Flu|Dr. Lee|Admitted
-1023|Devi Chong Wei|840315-10-1014 |32|M|patient1023|pass1023|N/A|N/A|15|3|2026|5|Asthma|Dr. Lim|Admitted
-1024|Ali Wei Jian|850416-10-1015!|33|F|patient1024|pass1024|N/A|N/A|16|4|2026|6|Diabetes|Dr. Kumar|Admitted
-1025|Lim Binti Hassan|860517-10-1016"|34|M|patient1025|pass1025|N/A|N/A|17|5|2026|7|Hypertension|Dr. Wong|Admitted
-1026|Zainab Kumar Singh|870618-10-1017#|35|F|patient1026|pass1026|N/A|N/A|18|6|2026|8|Migraine|Dr. Farah|Admitted
-1027|Kavi Hui Ling|880719-10-1018$|36|M|patient1027|pass1027|N/A|N/A|19|7|2026|9|Sprain|Dr. Tan|Admitted
-1028|Hui Bin Abu|890820-10-1019%|37|F|patient1028|pass1028|N/A|N/A|20|8|2026|10|Fracture|Dr. Lee|Admitted
-1029|Ahmad Bin Ismail|900921-10-1020&|38|M|patient1029|pass1029|N/A|N/A|21|9|2026|1|Allergy|Dr. Lim|Admitted
-1030|Siti Binti Yusof|911022-10-1021'|39|F|patient1030|pass1030|N/A|N/A|22|10|2026|2|Food Poisoning|Dr. Kumar|Admitted
-1031|Wong Mei Ling|921123-10-1022(|40|M|patient1031|pass1031|N/A|N/A|23|11|2026|3|Back Pain|Dr. Wong|Admitted
-1032|Kumar Raj Kumar|931224-10-1023)|41|F|patient1032|pass1032|N/A|N/A|24|12|2026|4|Anemia|Dr. Farah|Admitted
-1033|Lee Chong Wei|940125-10-1024*|42|M|patient1033|pass1033|N/A|N/A|25|1|2026|5|Fever|Dr. Tan|Admitted
-1034|Tan Wei Jian|950226-10-1025+|43|F|patient1034|pass1034|N/A|N/A|26|2|2026|6|Flu|Dr. Lee|Admitted
-1035|Nurul Binti Hassan|960327-10-1026,|44|M|patient1035|pass1035|N/A|N/A|27|3|2026|7|Asthma|Dr. Lim|Admitted
-1036|Raj Kumar Singh|970428-10-1027-|45|F|patient1036|pass1036|N/A|N/A|28|4|2026|8|Diabetes|Dr. Kumar|Admitted
-1037|Mei Hui Ling|980501-10-1028.|46|M|patient1037|pass1037|N/A|N/A|1|5|2026|9|Hypertension|Dr. Wong|Admitted
-1038|Hassan Bin Abu|990602-10-1029/|47|F|patient1038|pass1038|N/A|N/A|2|6|2026|10|Migraine|Dr. Farah|Admitted
-1039|Farah Bin Ismail|700703-10-10300|48|M|patient1039|pass1039|N/A|N/A|3|7|2026|1|Sprain|Dr. Tan|Discharged
-1040|Chong Binti Yusof|710804-10-10311|49|F|patient1040|pass1040|N/A|N/A|4|8|2026|2|Fracture|Dr. Lee|Discharged
-1041|Aisyah Mei Ling|720905-10-10322|50|M|patient1041|pass1041|N/A|N/A|5|9|2026|3|Allergy|Dr. Lim|Discharged
-1042|Wei Raj Kumar|731006-10-10333|51|F|patient1042|pass1042|N/A|N/A|6|10|2026|4|Food Poisoning|Dr. Kumar|Discharged
-1043|Devi Chong Wei|741107-10-10344|52|M|patient1043|pass1043|N/A|N/A|7|11|2026|5|Back Pain|Dr. Wong|Discharged
-1044|Ali Wei Jian|751208-10-10355|53|F|patient1044|pass1044|N/A|N/A|8|12|2026|6|Anemia|Dr. Farah|Discharged
-1045|Lim Binti Hassan|760109-10-10366|54|M|patient1045|pass1045|N/A|N/A|9|1|2026|7|Fever|Dr. Tan|Discharged
-1046|Zainab Kumar Singh|770210-10-10377|55|F|patient1046|pass1046|N/A|N/A|10|2|2026|8|Flu|Dr. Lee|Discharged
-1047|Kavi Hui Ling|780311-10-10388|56|M|patient1047|pass1047|N/A|N/A|11|3|2026|9|Asthma|Dr. Lim|Discharged
-1048|Hui Bin Abu|790412-10-10399|57|F|patient1048|pass1048|N/A|N/A|12|4|2026|10|Diabetes|Dr. Kumar|Discharged
-1049|Ahmad Bin Ismail|800513-10-1040:|58|M|patient1049|pass1049|N/A|N/A|13|5|2026|1|Hypertension|Dr. Wong|Discharged
-1050|Siti Binti Yusof|810614-10-1041;|59|F|patient1050|pass1050|N/A|N/A|14|6|2026|2|Migraine|Dr. Farah|Discharged
+1001|Ahmad Bin Ismail|700101-10-1000|18|M|patient1001|pass1001|N/A|N/A|1|1|2026|1|Fever|Dr. Tan|Admitted
+1002|Siti Binti Yusof|710202-10-1001|19|F|patient1002|pass1002|N/A|N/A|2|2|2026|2|Flu|Dr. Lee|Admitted
+1003|Wong Mei Ling|720303-10-1002|20|M|patient1003|pass1003|N/A|N/A|3|3|2026|3|Asthma|Dr. Lim|Admitted
+1004|Kumar Raj Kumar|730404-10-1003|21|F|patient1004|pass1004|N/A|N/A|4|4|2026|4|Diabetes|Dr. Kumar|Admitted
+1005|Lee Chong Wei|740505-10-1004|22|M|patient1005|pass1005|N/A|N/A|5|5|2026|5|Hypertension|Dr. Wong|Admitted
+1006|Tan Wei Jian|750606-10-1005|23|F|patient1006|pass1006|N/A|N/A|6|6|2026|6|Migraine|Dr. Farah|Admitted
+1007|Nurul Binti Hassan|760707-10-1006|24|M|patient1007|pass1007|N/A|N/A|7|7|2026|7|Sprain|Dr. Tan|Admitted
+1008|Raj Kumar Singh|770808-10-1007|25|F|patient1008|pass1008|N/A|N/A|8|8|2026|8|Fracture|Dr. Lee|Admitted
+1009|Mei Hui Ling|780909-10-1008|26|M|patient1009|pass1009|N/A|N/A|9|9|2026|9|Allergy|Dr. Lim|Admitted
+1010|Hassan Bin Abu|791010-10-1009|27|F|patient1010|pass1010|N/A|N/A|10|10|2026|10|Food Poisoning|Dr. Kumar|Admitted
+1011|Farah Bin Ismail|801111-10-1010|28|M|patient1011|pass1011|N/A|N/A|11|11|2026|1|Back Pain|Dr. Wong|Admitted
+1012|Chong Binti Yusof|811212-10-1011|29|F|patient1012|pass1012|N/A|N/A|12|12|2026|2|Anemia|Dr. Farah|Admitted
+1013|Aisyah Mei Ling|820113-10-1012|30|M|patient1013|pass1013|N/A|N/A|13|1|2026|3|Fever|Dr. Tan|Admitted
+1014|Wei Raj Kumar|830214-10-1013|31|F|patient1014|pass1014|N/A|N/A|14|2|2026|4|Flu|Dr. Lee|Admitted
+1015|Devi Chong Wei|840315-10-1014|32|M|patient1015|pass1015|N/A|N/A|15|3|2026|5|Asthma|Dr. Lim|Admitted
+1016|Ali Wei Jian|850416-10-1015|33|F|patient1016|pass1016|N/A|N/A|16|4|2026|6|Diabetes|Dr. Kumar|Admitted
+1017|Lim Binti Hassan|860517-10-1016|34|M|patient1017|pass1017|N/A|N/A|17|5|2026|7|Hypertension|Dr. Wong|Admitted
+1018|Zainab Kumar Singh|870618-10-1017|35|F|patient1018|pass1018|N/A|N/A|18|6|2026|8|Migraine|Dr. Farah|Admitted
+1019|Kavi Hui Ling|880719-10-1018|36|M|patient1019|pass1019|N/A|N/A|19|7|2026|9|Sprain|Dr. Tan|Admitted
+1020|Hui Bin Abu|890820-10-1019|37|F|patient1020|pass1020|N/A|N/A|20|8|2026|10|Fracture|Dr. Lee|Admitted
+1021|Ahmad Bin Ismail|900921-10-1020|38|M|patient1021|pass1021|N/A|N/A|21|9|2026|1|Allergy|Dr. Lim|Admitted
+1022|Siti Binti Yusof|911022-10-1021|39|F|patient1022|pass1022|N/A|N/A|22|10|2026|2|Food Poisoning|Dr. Kumar|Admitted
+1023|Wong Mei Ling|921123-10-1022|40|M|patient1023|pass1023|N/A|N/A|23|11|2026|3|Back Pain|Dr. Wong|Admitted
+1024|Kumar Raj Kumar|931224-10-1023|41|F|patient1024|pass1024|N/A|N/A|24|12|2026|4|Anemia|Dr. Farah|Admitted
+1025|Lee Chong Wei|940125-10-1024|42|M|patient1025|pass1025|N/A|N/A|25|1|2026|5|Fever|Dr. Tan|Admitted
+1026|Tan Wei Jian|950226-10-1025|43|F|patient1026|pass1026|N/A|N/A|26|2|2026|6|Flu|Dr. Lee|Admitted
+1027|Nurul Binti Hassan|960327-10-1026|44|M|patient1027|pass1027|N/A|N/A|27|3|2026|7|Asthma|Dr. Lim|Admitted
+1028|Raj Kumar Singh|970428-10-1027|45|F|patient1028|pass1028|N/A|N/A|28|4|2026|8|Diabetes|Dr. Kumar|Admitted
+1029|Mei Hui Ling|980501-10-1028|46|M|patient1029|pass1029|N/A|N/A|1|5|2026|9|Hypertension|Dr. Wong|Admitted
+1030|Hassan Bin Abu|990602-10-1029|47|F|patient1030|pass1030|N/A|N/A|2|6|2026|10|Migraine|Dr. Farah|Admitted
+1031|Farah Bin Ismail|700703-10-1030|48|M|patient1031|pass1031|N/A|N/A|3|7|2026|1|Sprain|Dr. Tan|Discharged
+1032|Chong Binti Yusof|710804-10-1031|49|F|patient1032|pass1032|N/A|N/A|4|8|2026|2|Fracture|Dr. Lee|Discharged
+1033|Aisyah Mei Ling|720905-10-1032|50|M|patient1033|pass1033|N/A|N/A|5|9|2026|3|Allergy|Dr. Lim|Discharged
+1034|Wei Raj Kumar|731006-10-1033|51|F|patient1034|pass1034|N/A|N/A|6|10|2026|4|Food Poisoning|Dr. Kumar|Discharged
+1035|Devi Chong Wei|741107-10-1034|52|M|patient1035|pass1035|N/A|N/A|7|11|2026|5|Back Pain|Dr. Wong|Discharged
+1036|Ali Wei Jian|751208-10-1035|53|F|patient1036|pass1036|N/A|N/A|8|12|2026|6|Anemia|Dr. Farah|Discharged
+1037|Lim Binti Hassan|760109-10-1036|54|M|patient1037|pass1037|N/A|N/A|9|1|2026|7|Fever|Dr. Tan|Discharged
+1038|Zainab Kumar Singh|770210-10-1037|55|F|patient1038|pass1038|N/A|N/A|10|2|2026|8|Flu|Dr. Lee|Discharged
+1039|Kavi Hui Ling|780311-10-1038|56|M|patient1039|pass1039|N/A|N/A|11|3|2026|9|Asthma|Dr. Lim|Discharged
+1040|Hui Bin Abu|790412-10-1039|57|F|patient1040|pass1040|N/A|N/A|12|4|2026|10|Diabetes|Dr. Kumar|Discharged
+1041|Ahmad Bin Ismail|800513-10-1040|58|M|patient1041|pass1041|N/A|N/A|13|5|2026|1|Hypertension|Dr. Wong|Discharged
+1042|Siti Binti Yusof|810614-10-1041|59|F|patient1042|pass1042|N/A|N/A|14|6|2026|2|Migraine|Dr. Farah|Discharged
+1043|Wong Mei Ling|820715-10-1042|60|M|patient1043|pass1043|N/A|N/A|15|7|2026|3|Sprain|Dr. Tan|Discharged
+1044|Kumar Raj Kumar|830816-10-1043|61|F|patient1044|pass1044|N/A|N/A|16|8|2026|4|Fracture|Dr. Lee|Discharged
+1045|Lee Chong Wei|840917-10-1044|62|M|patient1045|pass1045|N/A|N/A|17|9|2026|5|Allergy|Dr. Lim|Discharged
+1046|Tan Wei Jian|851018-10-1045|63|F|patient1046|pass1046|N/A|N/A|18|10|2026|6|Food Poisoning|Dr. Kumar|Discharged
+1047|Nurul Binti Hassan|861119-10-1046|64|M|patient1047|pass1047|N/A|N/A|19|11|2026|7|Back Pain|Dr. Wong|Discharged
+1048|Raj Kumar Singh|871220-10-1047|65|F|patient1048|pass1048|N/A|N/A|20|12|2026|8|Anemia|Dr. Farah|Discharged
+1049|Mei Hui Ling|880121-10-1048|66|M|patient1049|pass1049|N/A|N/A|21|1|2026|9|Fever|Dr. Tan|Discharged
+1050|Hassan Bin Abu|890222-10-1049|67|F|patient1050|pass1050|N/A|N/A|22|2|2026|10|Flu|Dr. Lee|Discharged
+1051|Tan Hong Wai|060606012191|20|M|Hong Wai|user123|0|melaka|21|6|2026|0|N/A|N/A|Registered
+1052|Goh Mian De|089185710181|20|M|miande|user123|0|ayer keroh|21|6|2026|8|Body Checkup|Farah|Admitted
+1053|Testing User|1234567890123|38|F|testing1|user123|0|johor|21|6|2026|0|N/A|N/A|Registered

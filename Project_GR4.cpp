@@ -77,7 +77,7 @@ protected:
     // protected (not private) on purpose: child classes need direct access,
     // but outside code/classes still cannot touch these fields directly
     char   name[MAX_NAME_LEN];
-    char   icNumber[14];     
+    char   icNumber[20];     
     int    age;
     char   gender;
     ContactInfo contact;
@@ -1248,7 +1248,7 @@ void recoverFromBadNumberInput() {
     if (cin.fail()) {
         cin.clear();
         cin.ignore(1000, '\n');
-        throw InputException("Invalid input - please enter a valid number.");
+        throw InputException("Invalid input. Please enter a valid number.");
     }
 }
 
